@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth';
 import { Kysely, sql } from 'kysely';
 import { LibsqlDialect } from '@libsql/kysely-libsql';
 
-const db = new Kysely<any>({
+export const db = new Kysely<any>({
   dialect: new LibsqlDialect({
     url: 'file:sqlite.db',
   }),

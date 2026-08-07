@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
-import { User as UserIcon, LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles } from 'lucide-react';
+import { User as UserIcon, LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
 
 export function Navbar() {
   const { user, loading, logout } = useAuth();
@@ -41,6 +41,20 @@ export function Navbar() {
             <LayoutDashboard className="size-4" />
             <span>Dashboard</span>
           </Link>
+
+          {user?.role === 'admin' && (
+            <Link
+              href="/admin/users"
+              className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                pathname === '/admin/users'
+                  ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
+                  : 'text-muted-foreground hover:text-purple-300 hover:bg-purple-500/10'
+              }`}
+            >
+              <Users className="size-4 text-purple-400" />
+              <span>Пользователи</span>
+            </Link>
+          )}
 
           {!loading && user ? (
             <div className="flex items-center gap-3 pl-2 border-l border-border/80">

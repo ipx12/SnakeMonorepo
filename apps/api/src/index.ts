@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
-import { auth } from './auth';
+import { auth, db } from './auth';
 
 dotenv.config();
 
@@ -51,6 +51,37 @@ const getAuthSession = async (req: express.Request) => {
     return null;
   }
 };
+
+// Admin Routes
+// GET /api/admin/users - Read all registered users in system (Admin only)
+app.get('/api/admin/users', async (req, res) => {
+  const session = await getAuthSession(req);
+  if (!session?.user) {
+    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+  }
+
+  const userRole = (session.user as any).role;
+  if (userRole !== 'admin') {
+    return res.status(403).json({ message: 'Доступ разрешен только администраторам' });
+  }
+
+  try {
+    const users = await db.selectFrom('user').selectAll().execute();
+    const formattedUsers = users.map((u: any) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      emailVerified: Boolean(u.emailVerified),
+      image: u.image || null,
+      role: u.role || 'user',
+      createdAt: typeof u.createdAt === 'number' ? new Date(u.createdAt).toISOString() : u.createdAt,
+      updatedAt: typeof u.updatedAt === 'number' ? new Date(u.updatedAt).toISOString() : u.updatedAt,
+    }));
+    res.json(formattedUsers);
+  } catch (err: any) {
+    res.status(500).json({ message: 'Failed to fetch users', error: err.message });
+  }
+});
 
 // CRUD Routes
 
