@@ -132,7 +132,7 @@ export default function Home() {
         {authLoading ? (
           <div className="py-20 px-6 border border-border/60 rounded-2xl bg-secondary/10 backdrop-blur-xl flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-200">
             <div className="size-10 animate-spin rounded-full border-3 border-emerald-500 border-t-transparent" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Загрузка сессии...</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Loading session...</span>
           </div>
         ) : !user ? (
           <div className="py-16 px-6 border border-border/80 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-xl flex flex-col items-center text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
@@ -140,20 +140,20 @@ export default function Home() {
               <Lock className="size-8" />
             </div>
             <div className="space-y-2 max-w-md">
-              <h2 className="text-2xl font-bold text-foreground tracking-tight">Залогиньтесь, пожалуйста</h2>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Please Sign In</h2>
               <p className="text-sm text-muted-foreground">
-                Чтобы просматривать и управлять личными задачами, необходимо войти в свою учетную запись.
+                To view and manage your personal tasks, you need to sign in to your account.
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">
               <Link href="/login">
                 <Button className="bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-xs px-5 py-2.5 rounded-xl gap-2 cursor-pointer shadow-lg shadow-emerald-500/20">
-                  <LogIn className="size-4" /> Войти
+                  <LogIn className="size-4" /> Sign In
                 </Button>
               </Link>
               <Link href="/register">
                 <Button variant="outline" className="border-border hover:bg-secondary font-semibold text-xs px-5 py-2.5 rounded-xl gap-2 cursor-pointer">
-                  <UserPlus className="size-4 text-emerald-400" /> Зарегистрироваться
+                  <UserPlus className="size-4 text-emerald-400" /> Register
                 </Button>
               </Link>
             </div>

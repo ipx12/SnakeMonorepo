@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
-import { auth } from './auth';
+import { auth, db } from './auth';
 
 dotenv.config();
 
@@ -52,13 +52,44 @@ const getAuthSession = async (req: express.Request) => {
   }
 };
 
+// Admin Routes
+// GET /api/admin/users - Read all registered users in system (Admin only)
+app.get('/api/admin/users', async (req, res) => {
+  const session = await getAuthSession(req);
+  if (!session?.user) {
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
+  }
+
+  const userRole = (session.user as any).role;
+  if (userRole !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Admin role required.' });
+  }
+
+  try {
+    const users = await db.selectFrom('user').selectAll().execute();
+    const formattedUsers = users.map((u: any) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      emailVerified: Boolean(u.emailVerified),
+      image: u.image || null,
+      role: u.role || 'user',
+      createdAt: typeof u.createdAt === 'number' ? new Date(u.createdAt).toISOString() : u.createdAt,
+      updatedAt: typeof u.updatedAt === 'number' ? new Date(u.updatedAt).toISOString() : u.updatedAt,
+    }));
+    res.json(formattedUsers);
+  } catch (err: any) {
+    res.status(500).json({ message: 'Failed to fetch users', error: err.message });
+  }
+});
+
 // CRUD Routes
 
 // GET /api/items - Read user's tasks
 app.get('/api/items', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const userId = session.user.id;
@@ -95,7 +126,7 @@ app.get('/api/items', async (req, res) => {
 app.get('/api/items/:id', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const item = items.find((i) => i.id === req.params.id);
@@ -115,7 +146,7 @@ app.get('/api/items/:id', async (req, res) => {
 app.post('/api/items', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const { title, description } = req.body;
@@ -140,7 +171,7 @@ app.post('/api/items', async (req, res) => {
 app.put('/api/items/:id', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const itemIndex = items.findIndex((i) => i.id === req.params.id);
@@ -169,7 +200,7 @@ app.put('/api/items/:id', async (req, res) => {
 app.delete('/api/items/:id', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const itemIndex = items.findIndex((i) => i.id === req.params.id);

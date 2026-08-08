@@ -64,8 +64,8 @@ export default function LoginPage() {
             <div className="size-7 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-bold text-lg text-foreground">Успешная авторизация</h3>
-            <p className="text-xs text-muted-foreground">Переходим к вашим задачам...</p>
+            <h3 className="font-bold text-lg text-foreground">Login Successful</h3>
+            <p className="text-xs text-muted-foreground">Redirecting to your dashboard...</p>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, ShieldCheck, User as UserIcon, Crown, UserCheck } from 'lucide-react';
+import { LogIn, UserPlus, ShieldCheck, User as UserIcon, Crown, UserCheck, Users } from 'lucide-react';
 import type { User } from '@/lib/api';
 
 interface AuthStatusCardProps {
@@ -70,6 +70,16 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
       )}
 
       <div className="flex items-center gap-2.5 shrink-0">
+        {user?.role === 'admin' && (
+          <Link href="/admin/users">
+            <Button
+              size="sm"
+              className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold gap-1.5 cursor-pointer shadow-lg shadow-purple-500/25 transition-all hover:scale-105"
+            >
+              <Users className="size-3.5" /> User List
+            </Button>
+          </Link>
+        )}
         {!user && (
           <>
             <Link href="/login">

@@ -145,3 +145,24 @@ export async function deleteItem(id: string): Promise<void> {
   });
   if (!res.ok) throw new Error('Failed to delete item');
 }
+
+export interface AdminUserDetail {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  role: UserRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getAdminUsers(): Promise<AdminUserDetail[]> {
+  const res = await fetch(`${BASE_URL}/admin/users`, { credentials: 'include' });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || 'Failed to fetch users list');
+  }
+  return res.json();
+}
+
