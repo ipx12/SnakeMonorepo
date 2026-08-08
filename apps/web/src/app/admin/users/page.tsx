@@ -39,7 +39,7 @@ export default function AdminUsersPage() {
       const data = await getAdminUsers();
       setUsersList(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Не удалось загрузить список пользователей');
+      setError(err instanceof Error ? err.message : 'Failed to load the user list');
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export default function AdminUsersPage() {
         <div className="py-20 px-8 border border-border/60 rounded-2xl bg-secondary/10 backdrop-blur-xl flex flex-col items-center justify-center space-y-4 shadow-xl">
           <div className="size-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
           <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Загрузка списка пользователей...
+            Loading user list...
           </span>
         </div>
       </div>
@@ -90,14 +90,14 @@ export default function AdminUsersPage() {
             <ShieldAlert className="size-8" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">Доступ ограничен</h2>
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Access Restricted</h2>
             <p className="text-sm text-muted-foreground">
-              Страница панели администратора доступна только пользователям с ролью <span className="font-semibold text-purple-400">Admin</span>.
+              The admin panel is only accessible to users with the <span className="font-semibold text-purple-400">Admin</span> role.
             </p>
           </div>
           <Link href="/">
             <Button className="bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-xs px-5 py-2.5 rounded-xl gap-2 cursor-pointer shadow-lg shadow-emerald-500/20">
-              <ArrowLeft className="size-4" /> Вернуться на главную
+              <ArrowLeft className="size-4" /> Back to Home
             </Button>
           </Link>
         </div>
@@ -114,17 +114,17 @@ export default function AdminUsersPage() {
             <div className="flex items-center gap-2">
               <Link href="/">
                 <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
-                  <ArrowLeft className="size-4 mr-1" /> Главная
+                  <ArrowLeft className="size-4 mr-1" /> Home
                 </Button>
               </Link>
               <span className="text-xs text-muted-foreground">/</span>
-              <span className="text-xs font-semibold text-purple-400">Панель администратора</span>
+              <span className="text-xs font-semibold text-purple-400">Admin Panel</span>
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent flex items-center gap-3">
-              <Users className="size-8 text-purple-400" /> Все пользователи системы
+              <Users className="size-8 text-purple-400" /> All System Users
             </h1>
             <p className="text-sm text-muted-foreground">
-              Полный список зарегистрированных аккаунтов в приложении с подробной информацией
+              A complete list of all registered accounts in the application with detailed information
             </p>
           </div>
 
@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
             size="sm"
             className="border-purple-500/30 hover:bg-purple-500/10 text-purple-300 text-xs font-semibold gap-2 self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} /> Обновить список
+            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh List
           </Button>
         </div>
 
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
               <Users className="size-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Всего пользователей</p>
+              <p className="text-xs text-muted-foreground font-medium">Total Users</p>
               <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function AdminUsersPage() {
               <Crown className="size-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Администраторов</p>
+              <p className="text-xs text-muted-foreground font-medium">Admins</p>
               <p className="text-2xl font-bold text-amber-300">{adminCount}</p>
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
               <UserCheck className="size-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Обычных пользователей</p>
+              <p className="text-xs text-muted-foreground font-medium">Regular Users</p>
               <p className="text-2xl font-bold text-emerald-300">{regularCount}</p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function AdminUsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Поиск по имени, email, ID или роли..."
+              placeholder="Search by name, email, ID or role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-secondary/30 border-border/80 text-sm focus-visible:ring-purple-500"
@@ -198,25 +198,25 @@ export default function AdminUsersPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-secondary/40 text-xs font-semibold text-muted-foreground uppercase border-b border-border/60">
                 <tr>
-                  <th className="py-3.5 px-4">Пользователь</th>
-                  <th className="py-3.5 px-4">ID Аккаунта</th>
-                  <th className="py-3.5 px-4">Роль</th>
-                  <th className="py-3.5 px-4">Email подтверждён</th>
-                  <th className="py-3.5 px-4">Дата создания</th>
-                  <th className="py-3.5 px-4 text-right">Детали</th>
+                  <th className="py-3.5 px-4">User</th>
+                  <th className="py-3.5 px-4">Account ID</th>
+                  <th className="py-3.5 px-4">Role</th>
+                  <th className="py-3.5 px-4">Email Verified</th>
+                  <th className="py-3.5 px-4">Created At</th>
+                  <th className="py-3.5 px-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
                 {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
-                      {searchQuery ? 'Пользователи не найдены по запросу' : 'Список пользователей пуст'}
+                      {searchQuery ? 'No users found matching your query' : 'No users found'}
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((u) => {
                     const isExpanded = expandedUserId === u.id;
-                    const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ru-RU', {
+                    const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', {
                       day: '2-digit',
                       month: 'short',
                       year: 'numeric',
@@ -260,11 +260,11 @@ export default function AdminUsersPage() {
                           <td className="py-3.5 px-4">
                             {u.emailVerified ? (
                               <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                                <CheckCircle2 className="size-4" /> Да
+                                <CheckCircle2 className="size-4" /> Yes
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
-                                <XCircle className="size-4 text-muted-foreground/60" /> Нет
+                                <XCircle className="size-4 text-muted-foreground/60" /> No
                               </span>
                             )}
                           </td>
@@ -283,7 +283,7 @@ export default function AdminUsersPage() {
                               className="h-8 text-xs gap-1 text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 cursor-pointer"
                             >
                               <Info className="size-3.5" />
-                              <span>{isExpanded ? 'Скрыть' : 'Вся инфо'}</span>
+                              <span>{isExpanded ? 'Hide' : 'Full Info'}</span>
                               {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                             </Button>
                           </td>
@@ -295,31 +295,31 @@ export default function AdminUsersPage() {
                             <td colSpan={6} className="p-4 sm:p-6">
                               <div className="space-y-4 bg-background/60 p-4 rounded-xl border border-border/70">
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-2">
-                                  <Key className="size-4" /> Данные объекта пользователя в системе
+                                  <Key className="size-4" /> User Object Data
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">ID (Первичный ключ):</span>
+                                    <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
                                     <span className="font-mono text-foreground font-semibold select-all">{u.id}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Полное имя:</span>
+                                    <span className="text-muted-foreground block text-[11px]">Full Name:</span>
                                     <span className="text-foreground font-semibold">{u.name}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Email адрес:</span>
+                                    <span className="text-muted-foreground block text-[11px]">Email Address:</span>
                                     <span className="text-foreground font-semibold">{u.email}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Назначенная роль:</span>
+                                    <span className="text-muted-foreground block text-[11px]">Assigned Role:</span>
                                     <span className="text-purple-300 font-semibold">{u.role}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Дата регистрации:</span>
+                                    <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
                                     <span className="text-foreground font-semibold">{u.createdAt}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Последнее обновление:</span>
+                                    <span className="text-muted-foreground block text-[11px]">Last Updated:</span>
                                     <span className="text-foreground font-semibold">{u.updatedAt}</span>
                                   </div>
                                 </div>

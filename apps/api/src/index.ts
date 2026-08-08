@@ -57,12 +57,12 @@ const getAuthSession = async (req: express.Request) => {
 app.get('/api/admin/users', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const userRole = (session.user as any).role;
   if (userRole !== 'admin') {
-    return res.status(403).json({ message: 'Доступ разрешен только администраторам' });
+    return res.status(403).json({ message: 'Access denied. Admin role required.' });
   }
 
   try {
@@ -89,7 +89,7 @@ app.get('/api/admin/users', async (req, res) => {
 app.get('/api/items', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const userId = session.user.id;
@@ -126,7 +126,7 @@ app.get('/api/items', async (req, res) => {
 app.get('/api/items/:id', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const item = items.find((i) => i.id === req.params.id);
@@ -146,7 +146,7 @@ app.get('/api/items/:id', async (req, res) => {
 app.post('/api/items', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const { title, description } = req.body;
@@ -171,7 +171,7 @@ app.post('/api/items', async (req, res) => {
 app.put('/api/items/:id', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const itemIndex = items.findIndex((i) => i.id === req.params.id);
@@ -200,7 +200,7 @@ app.put('/api/items/:id', async (req, res) => {
 app.delete('/api/items/:id', async (req, res) => {
   const session = await getAuthSession(req);
   if (!session?.user) {
-    return res.status(401).json({ message: 'Залогиньтесь, пожалуйста' });
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
   }
 
   const itemIndex = items.findIndex((i) => i.id === req.params.id);

@@ -52,7 +52,7 @@ export function Navbar() {
               }`}
             >
               <Users className="size-4 text-purple-400" />
-              <span>Пользователи</span>
+              <span>Users</span>
             </Link>
           )}
 

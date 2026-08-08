@@ -76,7 +76,7 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
               size="sm"
               className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold gap-1.5 cursor-pointer shadow-lg shadow-purple-500/25 transition-all hover:scale-105"
             >
-              <Users className="size-3.5" /> Список пользователей
+              <Users className="size-3.5" /> User List
             </Button>
           </Link>
         )}
