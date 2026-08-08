@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { auth, db } from './auth';
+import { UserRole } from './roles';
 
 dotenv.config();
 
@@ -61,7 +62,7 @@ app.get('/api/admin/users', async (req, res) => {
   }
 
   const userRole = (session.user as any).role;
-  if (userRole !== 'admin') {
+  if (userRole !== UserRole.Admin) {
     return res.status(403).json({ message: 'Access denied. Admin role required.' });
   }
 
@@ -73,7 +74,7 @@ app.get('/api/admin/users', async (req, res) => {
       email: u.email,
       emailVerified: Boolean(u.emailVerified),
       image: u.image || null,
-      role: u.role || 'user',
+      role: u.role || UserRole.User,
       createdAt: typeof u.createdAt === 'number' ? new Date(u.createdAt).toISOString() : u.createdAt,
       updatedAt: typeof u.updatedAt === 'number' ? new Date(u.updatedAt).toISOString() : u.updatedAt,
     }));
@@ -109,7 +110,7 @@ app.get('/api/items', async (req, res) => {
       {
         id: Math.random().toString(36).substring(2, 9),
         title: 'Explore User Roles',
-        description: `Your account role is '${(session.user as any).role || 'user'}'.`,
+        description: `Your account role is '${(session.user as any).role || UserRole.User}'.`,
         completed: true,
         userId: userId,
         createdAt: new Date().toISOString(),
@@ -135,7 +136,7 @@ app.get('/api/items/:id', async (req, res) => {
   }
 
   const userRole = (session.user as any).role;
-  if (item.userId !== session.user.id && userRole !== 'admin') {
+  if (item.userId !== session.user.id && userRole !== UserRole.Admin) {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
@@ -180,7 +181,7 @@ app.put('/api/items/:id', async (req, res) => {
   }
 
   const userRole = (session.user as any).role;
-  if (items[itemIndex].userId !== session.user.id && userRole !== 'admin') {
+  if (items[itemIndex].userId !== session.user.id && userRole !== UserRole.Admin) {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
@@ -209,7 +210,7 @@ app.delete('/api/items/:id', async (req, res) => {
   }
 
   const userRole = (session.user as any).role;
-  if (items[itemIndex].userId !== session.user.id && userRole !== 'admin') {
+  if (items[itemIndex].userId !== session.user.id && userRole !== UserRole.Admin) {
     return res.status(403).json({ message: 'Forbidden' });
   }
 

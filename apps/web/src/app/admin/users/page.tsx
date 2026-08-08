@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import { getAdminUsers, type AdminUserDetail } from '@/lib/api';
+import { UserRole } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -47,7 +48,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (user?.role === 'admin') {
+    if (user?.role === UserRole.Admin) {
       fetchUsers();
     } else {
       setLoading(false);
@@ -66,8 +67,8 @@ export default function AdminUsersPage() {
   });
 
   const totalUsers = usersList.length;
-  const adminCount = usersList.filter((u) => u.role === 'admin').length;
-  const regularCount = usersList.filter((u) => u.role === 'user').length;
+  const adminCount = usersList.filter((u) => u.role === UserRole.Admin).length;
+  const regularCount = usersList.filter((u) => u.role === UserRole.User).length;
 
   if (authLoading || (loading && usersList.length === 0)) {
     return (
@@ -82,7 +83,7 @@ export default function AdminUsersPage() {
     );
   }
 
-  if (!user || user.role !== 'admin') {
+  if (!user || user.role !== UserRole.Admin) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md p-8 border border-destructive/30 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center space-y-5">
@@ -246,7 +247,7 @@ export default function AdminUsersPage() {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            {u.role === 'admin' ? (
+                            {u.role === UserRole.Admin ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
                                 <Crown className="size-3 text-amber-400" /> Admin
                               </span>
