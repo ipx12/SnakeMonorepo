@@ -1,6 +1,6 @@
 import { authClient } from './auth-client';
-
-export type UserRole = 'admin' | 'user' | 'guest';
+import { UserRole } from './roles';
+export { UserRole };
 
 export interface User {
   id: string;
@@ -45,7 +45,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
     email: payload.email,
     password: payload.password,
     name: payload.name,
-    role: payload.role || 'user',
+    role: payload.role || UserRole.User,
   } as any);
 
   if (error || !data?.user) {
@@ -56,7 +56,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
     id: data.user.id,
     name: data.user.name || '',
     email: data.user.email,
-    role: (data.user as any).role || payload.role || 'user',
+    role: (data.user as any).role || payload.role || UserRole.User,
     createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
   };
 
@@ -77,7 +77,7 @@ export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
     id: data.user.id,
     name: data.user.name || '',
     email: data.user.email,
-    role: (data.user as any).role || 'user',
+    role: (data.user as any).role || UserRole.User,
     createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
   };
 
@@ -93,7 +93,7 @@ export async function getCurrentUser(): Promise<User | null> {
       id: data.user.id,
       name: data.user.name || '',
       email: data.user.email,
-      role: (data.user as any).role || 'user',
+      role: (data.user as any).role || UserRole.User,
       createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
     };
   } catch {

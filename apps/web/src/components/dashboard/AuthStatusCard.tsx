@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, ShieldCheck, User as UserIcon, Crown, UserCheck, Users } from 'lucide-react';
 import type { User } from '@/lib/api';
+import { UserRole } from '@/lib/roles';
 
 interface AuthStatusCardProps {
   user: User | null;
@@ -10,14 +11,14 @@ interface AuthStatusCardProps {
 
 export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
   const getRoleBadge = (role?: string) => {
-    if (role === 'admin') {
+    if (role === UserRole.Admin) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
           <Crown className="size-3 text-amber-400" /> Admin
         </span>
       );
     }
-    if (role === 'user') {
+    if (role === UserRole.User) {
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 uppercase tracking-wider">
           <UserCheck className="size-3 text-emerald-400" /> User
@@ -70,7 +71,7 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
       )}
 
       <div className="flex items-center gap-2.5 shrink-0">
-        {user?.role === 'admin' && (
+        {user?.role === UserRole.Admin && (
           <Link href="/admin/users">
             <Button
               size="sm"

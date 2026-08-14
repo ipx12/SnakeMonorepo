@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { UserRole } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import { User as UserIcon, LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
 
@@ -42,7 +43,7 @@ export function Navbar() {
             <span>Dashboard</span>
           </Link>
 
-          {user?.role === 'admin' && (
+          {user?.role === UserRole.Admin && (
             <Link
               href="/admin/users"
               className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
