@@ -12,108 +12,115 @@ import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, Lock } from 'lucide-react';
 
 export default function Home() {
-  const { user, loading: authLoading } = useAuth();
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [error, setError] = useState('');
+  const { user, loading: isAuthLoading } = useAuth();
+  const [taskList, setTaskList] = useState<Item[]>([]);
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [editingTask, setEditingTask] = useState<Item | null>(null);
+  const [editingTaskTitle, setEditingTaskTitle] = useState('');
+  const [editingTaskDescription, setEditingTaskDescription] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const fetchItems = async () => {
+  const fetchTaskList = async () => {
     if (!user) return;
     try {
-      setLoading(true);
-      const data = await getItems();
-      setItems(data);
-      setError('');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setIsTasksLoading(true);
+      const fetchedTasks = await getItems();
+      setTaskList(fetchedTasks);
+      setErrorMessage('');
+    } catch (caughtError: unknown) {
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
     } finally {
-      setLoading(false);
+      setIsTasksLoading(false);
     }
   };
 
   useEffect(() => {
-    if (authLoading) return;
+    if (isAuthLoading) return;
     if (!user) {
-      setItems([]);
-      setLoading(false);
+      setTaskList([]);
+      setIsTasksLoading(false);
       return;
     }
 
-    let ignore = false;
-    setLoading(true);
+    let isCancelled = false;
+    setIsTasksLoading(true);
     getItems()
-      .then((data) => {
-        if (!ignore) {
-          setItems(data);
-          setError('');
-          setLoading(false);
+      .then((fetchedTasks) => {
+        if (!isCancelled) {
+          setTaskList(fetchedTasks);
+          setErrorMessage('');
+          setIsTasksLoading(false);
         }
       })
-      .catch((err) => {
-        if (!ignore) {
-          setError(err instanceof Error ? err.message : 'Something went wrong');
-          setLoading(false);
+      .catch((caughtError) => {
+        if (!isCancelled) {
+          setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+          setIsTasksLoading(false);
         }
       });
 
     return () => {
-      ignore = true;
+      isCancelled = true;
     };
-  }, [user, authLoading]);
+  }, [user, isAuthLoading]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
+  const handleCreateTask = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!newTaskTitle.trim()) return;
 
     try {
-      const newItem = await createItem(title, description);
-      setItems((prev) => [...prev, newItem]);
-      setTitle('');
-      setDescription('');
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const newlyCreatedTask = await createItem(newTaskTitle, newTaskDescription);
+      setTaskList((previousTasks) => [...previousTasks, newlyCreatedTask]);
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+    } catch (caughtError: unknown) {
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
     }
   };
 
-  const handleUpdateToggle = async (item: Item) => {
+  const handleToggleTaskCompletion = async (targetTask: Item) => {
     try {
-      const updated = await updateItem(item.id, { completed: !item.completed });
-      setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const updatedTask = await updateItem(targetTask.id, { completed: !targetTask.completed });
+      setTaskList((previousTasks) =>
+        previousTasks.map((currentTask) => (currentTask.id === targetTask.id ? updatedTask : currentTask))
+      );
+    } catch (caughtError: unknown) {
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
     }
   };
 
-  const handleStartEdit = (item: Item) => {
-    setEditingItem(item);
-    setEditTitle(item.title);
-    setEditDescription(item.description);
+  const handleStartTaskEdit = (targetTask: Item) => {
+    setEditingTask(targetTask);
+    setEditingTaskTitle(targetTask.title);
+    setEditingTaskDescription(targetTask.description);
   };
 
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingItem || !editTitle.trim()) return;
+  const handleSaveTaskEdit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingTask || !editingTaskTitle.trim()) return;
 
     try {
-      const updated = await updateItem(editingItem.id, { title: editTitle, description: editDescription });
-      setItems((prev) => prev.map((i) => (i.id === editingItem.id ? updated : i)));
-      setEditingItem(null);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const updatedTask = await updateItem(editingTask.id, {
+        title: editingTaskTitle,
+        description: editingTaskDescription,
+      });
+      setTaskList((previousTasks) =>
+        previousTasks.map((currentTask) => (currentTask.id === editingTask.id ? updatedTask : currentTask))
+      );
+      setEditingTask(null);
+    } catch (caughtError: unknown) {
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     try {
-      await deleteItem(id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      await deleteItem(taskId);
+      setTaskList((previousTasks) => previousTasks.filter((currentTask) => currentTask.id !== taskId));
+    } catch (caughtError: unknown) {
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
     }
   };
 
@@ -121,15 +128,15 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="w-full max-w-4xl space-y-10">
         <DashboardHeader />
-        <AuthStatusCard user={user} authLoading={authLoading} />
+        <AuthStatusCard user={user} authLoading={isAuthLoading} />
 
-        {error && (
+        {errorMessage && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm text-center font-medium animate-in fade-in slide-in-from-top-2 duration-200">
-            {error}
+            {errorMessage}
           </div>
         )}
 
-        {authLoading ? (
+        {isAuthLoading ? (
           <div className="py-20 px-6 border border-border/60 rounded-2xl bg-secondary/10 backdrop-blur-xl flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-200">
             <div className="size-10 animate-spin rounded-full border-3 border-emerald-500 border-t-transparent" />
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Loading session...</span>
@@ -161,26 +168,26 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
             <CreateTaskForm
-              title={title}
-              description={description}
-              setTitle={setTitle}
-              setDescription={setDescription}
-              onSubmit={handleCreate}
+              title={newTaskTitle}
+              description={newTaskDescription}
+              setTitle={setNewTaskTitle}
+              setDescription={setNewTaskDescription}
+              onSubmit={handleCreateTask}
             />
             <TaskList
-              items={items}
-              loading={loading}
-              editingItem={editingItem}
-              editTitle={editTitle}
-              editDescription={editDescription}
-              setEditTitle={setEditTitle}
-              setEditDescription={setEditDescription}
-              onRefresh={fetchItems}
-              onToggle={handleUpdateToggle}
-              onStartEdit={handleStartEdit}
-              onSaveEdit={handleSaveEdit}
-              onCancelEdit={() => setEditingItem(null)}
-              onDelete={handleDelete}
+              items={taskList}
+              loading={isTasksLoading}
+              editingItem={editingTask}
+              editTitle={editingTaskTitle}
+              editDescription={editingTaskDescription}
+              setEditTitle={setEditingTaskTitle}
+              setEditDescription={setEditingTaskDescription}
+              onRefresh={fetchTaskList}
+              onToggle={handleToggleTaskCompletion}
+              onStartEdit={handleStartTaskEdit}
+              onSaveEdit={handleSaveTaskEdit}
+              onCancelEdit={() => setEditingTask(null)}
+              onDelete={handleDeleteTask}
             />
           </div>
         )}

@@ -26,51 +26,51 @@ import {
 } from 'lucide-react';
 
 export default function AdminUsersPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
   const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
-      setError('');
-      const data = await getAdminUsers();
-      setUsersList(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load the user list');
+      setIsUsersLoading(true);
+      setErrorMessage('');
+      const fetchedUsers = await getAdminUsers();
+      setUsersList(fetchedUsers);
+    } catch (caughtError: unknown) {
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to load the user list');
     } finally {
-      setLoading(false);
+      setIsUsersLoading(false);
     }
   };
 
   useEffect(() => {
-    if (authLoading) return;
+    if (isAuthLoading) return;
     if (user?.role === UserRole.Admin) {
       fetchUsers();
     } else {
-      setLoading(false);
+      setIsUsersLoading(false);
     }
-  }, [user, authLoading]);
+  }, [user, isAuthLoading]);
 
-  const filteredUsers = usersList.filter((u) => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
+  const filteredUsers = usersList.filter((userItem) => {
+    const searchQueryText = searchQuery.toLowerCase().trim();
+    if (!searchQueryText) return true;
     return (
-      u.id.toLowerCase().includes(q) ||
-      u.name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.role.toLowerCase().includes(q)
+      userItem.id.toLowerCase().includes(searchQueryText) ||
+      userItem.name.toLowerCase().includes(searchQueryText) ||
+      userItem.email.toLowerCase().includes(searchQueryText) ||
+      userItem.role.toLowerCase().includes(searchQueryText)
     );
   });
 
   const totalUsers = usersList.length;
-  const adminCount = usersList.filter((u) => u.role === UserRole.Admin).length;
-  const regularCount = usersList.filter((u) => u.role === UserRole.User).length;
+  const adminCount = usersList.filter((userItem) => userItem.role === UserRole.Admin).length;
+  const regularCount = usersList.filter((userItem) => userItem.role === UserRole.User).length;
 
-  if (authLoading || (loading && usersList.length === 0)) {
+  if (isAuthLoading || (isUsersLoading && usersList.length === 0)) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
         <div className="py-20 px-8 border border-border/60 rounded-2xl bg-secondary/10 backdrop-blur-xl flex flex-col items-center justify-center space-y-4 shadow-xl">
@@ -131,12 +131,12 @@ export default function AdminUsersPage() {
 
           <Button
             onClick={fetchUsers}
-            disabled={loading}
+            disabled={isUsersLoading}
             variant="outline"
             size="sm"
             className="border-purple-500/30 hover:bg-purple-500/10 text-purple-300 text-xs font-semibold gap-2 self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh List
+            <RefreshCw className={`size-3.5 ${isUsersLoading ? 'animate-spin' : ''}`} /> Refresh List
           </Button>
         </div>
 
@@ -173,9 +173,9 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {error && (
+        {errorMessage && (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium animate-in fade-in">
-            {error}
+            {errorMessage}
           </div>
         )}
 
@@ -187,7 +187,7 @@ export default function AdminUsersPage() {
               type="text"
               placeholder="Search by name, email, ID or role..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
               className="pl-9 bg-secondary/30 border-border/80 text-sm focus-visible:ring-purple-500"
             />
           </div>
@@ -215,39 +215,41 @@ export default function AdminUsersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((u) => {
-                    const isExpanded = expandedUserId === u.id;
-                    const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    }) : '—';
+                  filteredUsers.map((userItem) => {
+                    const isExpanded = expandedUserId === userItem.id;
+                    const createdDate = userItem.createdAt
+                      ? new Date(userItem.createdAt).toLocaleDateString('en-US', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '—';
 
                     return (
-                      <React.Fragment key={u.id}>
+                      <React.Fragment key={userItem.id}>
                         <tr className="hover:bg-secondary/30 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
                               <div className="size-9 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
-                                {u.name.charAt(0).toUpperCase()}
+                                {userItem.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold text-foreground text-sm">{u.name}</span>
-                                <span className="text-xs text-muted-foreground">{u.email}</span>
+                                <span className="font-semibold text-foreground text-sm">{userItem.name}</span>
+                                <span className="text-xs text-muted-foreground">{userItem.email}</span>
                               </div>
                             </div>
                           </td>
 
                           <td className="py-3.5 px-4">
                             <span className="font-mono text-xs text-purple-300 bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 select-all">
-                              {u.id}
+                              {userItem.id}
                             </span>
                           </td>
 
                           <td className="py-3.5 px-4">
-                            {u.role === UserRole.Admin ? (
+                            {userItem.role === UserRole.Admin ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
                                 <Crown className="size-3 text-amber-400" /> Admin
                               </span>
@@ -259,7 +261,7 @@ export default function AdminUsersPage() {
                           </td>
 
                           <td className="py-3.5 px-4">
-                            {u.emailVerified ? (
+                            {userItem.emailVerified ? (
                               <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
                                 <CheckCircle2 className="size-4" /> Yes
                               </span>
@@ -280,7 +282,7 @@ export default function AdminUsersPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setExpandedUserId(isExpanded ? null : u.id)}
+                              onClick={() => setExpandedUserId(isExpanded ? null : userItem.id)}
                               className="h-8 text-xs gap-1 text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 cursor-pointer"
                             >
                               <Info className="size-3.5" />
@@ -301,33 +303,33 @@ export default function AdminUsersPage() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
-                                    <span className="font-mono text-foreground font-semibold select-all">{u.id}</span>
+                                    <span className="font-mono text-foreground font-semibold select-all">{userItem.id}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">Full Name:</span>
-                                    <span className="text-foreground font-semibold">{u.name}</span>
+                                    <span className="text-foreground font-semibold">{userItem.name}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">Email Address:</span>
-                                    <span className="text-foreground font-semibold">{u.email}</span>
+                                    <span className="text-foreground font-semibold">{userItem.email}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">Assigned Role:</span>
-                                    <span className="text-purple-300 font-semibold">{u.role}</span>
+                                    <span className="text-purple-300 font-semibold">{userItem.role}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
-                                    <span className="text-foreground font-semibold">{u.createdAt}</span>
+                                    <span className="text-foreground font-semibold">{userItem.createdAt}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">Last Updated:</span>
-                                    <span className="text-foreground font-semibold">{u.updatedAt}</span>
+                                    <span className="text-foreground font-semibold">{userItem.updatedAt}</span>
                                   </div>
                                 </div>
                                 <div className="space-y-1 pt-1">
                                   <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
                                   <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto">
-                                    {JSON.stringify(u, null, 2)}
+                                    {JSON.stringify(userItem, null, 2)}
                                   </pre>
                                 </div>
                               </div>
