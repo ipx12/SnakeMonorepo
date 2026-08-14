@@ -111,39 +111,39 @@ export async function logoutUser(): Promise<void> {
 
 // Items API calls
 export async function getItems(): Promise<Item[]> {
-  const res = await fetch(API_URL, { credentials: 'include' });
-  if (!res.ok) throw new Error('Failed to fetch items');
-  return res.json();
+  const apiResponse = await fetch(API_URL, { credentials: 'include' });
+  if (!apiResponse.ok) throw new Error('Failed to fetch items');
+  return apiResponse.json();
 }
 
 export async function createItem(title: string, description: string): Promise<Item> {
-  const res = await fetch(API_URL, {
+  const apiResponse = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, description }),
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('Failed to create item');
-  return res.json();
+  if (!apiResponse.ok) throw new Error('Failed to create item');
+  return apiResponse.json();
 }
 
-export async function updateItem(id: string, updates: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<Item> {
-  const res = await fetch(`${API_URL}/${id}`, {
+export async function updateItem(itemId: string, updates: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<Item> {
+  const apiResponse = await fetch(`${API_URL}/${itemId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('Failed to update item');
-  return res.json();
+  if (!apiResponse.ok) throw new Error('Failed to update item');
+  return apiResponse.json();
 }
 
-export async function deleteItem(id: string): Promise<void> {
-  const res = await fetch(`${API_URL}/${id}`, {
+export async function deleteItem(itemId: string): Promise<void> {
+  const apiResponse = await fetch(`${API_URL}/${itemId}`, {
     method: 'DELETE',
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('Failed to delete item');
+  if (!apiResponse.ok) throw new Error('Failed to delete item');
 }
 
 export interface AdminUserDetail {
@@ -158,11 +158,11 @@ export interface AdminUserDetail {
 }
 
 export async function getAdminUsers(): Promise<AdminUserDetail[]> {
-  const res = await fetch(`${BASE_URL}/admin/users`, { credentials: 'include' });
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.message || 'Failed to fetch users list');
+  const apiResponse = await fetch(`${BASE_URL}/admin/users`, { credentials: 'include' });
+  if (!apiResponse.ok) {
+    const errorResponseData = await apiResponse.json().catch(() => ({}));
+    throw new Error(errorResponseData.message || 'Failed to fetch users list');
   }
-  return res.json();
+  return apiResponse.json();
 }
 

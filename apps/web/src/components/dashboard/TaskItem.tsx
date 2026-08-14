@@ -10,49 +10,49 @@ interface TaskItemProps {
   isEditing: boolean;
   editTitle: string;
   editDescription: string;
-  setEditTitle: (val: string) => void;
-  setEditDescription: (val: string) => void;
-  onToggle: (item: Item) => void;
-  onStartEdit: (item: Item) => void;
-  onSaveEdit: (e: React.FormEvent) => void;
+  setEditTitle: (newTitle: string) => void;
+  setEditDescription: (newDescription: string) => void;
+  onToggle: (task: Item) => void;
+  onStartEdit: (task: Item) => void;
+  onSaveEdit: (event: React.FormEvent) => void;
   onCancelEdit: () => void;
-  onDelete: (id: string) => void;
+  onDelete: (taskId: string) => void;
 }
 
 export function TaskItem({
-  item,
+  item: task,
   isEditing,
-  editTitle,
-  editDescription,
+  editTitle: editingTitle,
+  editDescription: editingDescription,
   setEditTitle,
   setEditDescription,
-  onToggle,
-  onStartEdit,
-  onSaveEdit,
-  onCancelEdit,
-  onDelete,
+  onToggle: onToggleTask,
+  onStartEdit: onStartEditTask,
+  onSaveEdit: onSaveEditTask,
+  onCancelEdit: onCancelEditTask,
+  onDelete: onDeleteTask,
 }: TaskItemProps) {
   return (
     <div
       className={`p-4 rounded-xl border transition-all duration-200 ${
-        item.completed
+        task.completed
           ? 'bg-secondary/10 border-border/40 opacity-70 hover:opacity-90'
           : 'bg-secondary/20 border-border hover:border-border-foreground/20 hover:bg-secondary/30'
       }`}
     >
       {isEditing ? (
-        <form onSubmit={onSaveEdit} className="space-y-4">
+        <form onSubmit={onSaveEditTask} className="space-y-4">
           <div className="space-y-2">
             <Input
               type="text"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
+              value={editingTitle}
+              onChange={(event) => setEditTitle(event.target.value)}
               required
               className="bg-background/80"
             />
             <Textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
+              value={editingDescription}
+              onChange={(event) => setEditDescription(event.target.value)}
               rows={2}
               className="bg-background/80 resize-none"
             />
@@ -69,7 +69,7 @@ export function TaskItem({
               type="button"
               variant="secondary"
               size="sm"
-              onClick={onCancelEdit}
+              onClick={onCancelEditTask}
               className="px-4 cursor-pointer border border-border"
             >
               Cancel
@@ -80,21 +80,21 @@ export function TaskItem({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <Checkbox
-              checked={item.completed}
-              onCheckedChange={() => onToggle(item)}
+              checked={task.completed}
+              onCheckedChange={() => onToggleTask(task)}
               className="mt-1 border-border/80 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
             />
             <div className="min-w-0">
               <h3
                 className={`font-semibold text-base leading-tight truncate ${
-                  item.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                  task.completed ? 'line-through text-muted-foreground' : 'text-foreground'
                 }`}
               >
-                {item.title}
+                {task.title}
               </h3>
-              {item.description && (
+              {task.description && (
                 <p className="text-muted-foreground text-sm mt-1 whitespace-pre-wrap leading-relaxed">
-                  {item.description}
+                  {task.description}
                 </p>
               )}
             </div>
@@ -103,7 +103,7 @@ export function TaskItem({
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => onStartEdit(item)}
+              onClick={() => onStartEditTask(task)}
               className="text-muted-foreground hover:text-emerald-400 hover:bg-secondary transition-all cursor-pointer"
               title="Edit"
             >
@@ -112,7 +112,7 @@ export function TaskItem({
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => onDelete(item.id)}
+              onClick={() => onDeleteTask(task.id)}
               className="text-muted-foreground hover:text-destructive hover:bg-secondary transition-all cursor-pointer"
               title="Delete"
             >

@@ -39,6 +39,10 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), authentication client (`auth-client.ts`), and helper utilities.
 - `apps/api/src/`: Express backend code, database connections, and routes.
 
+### 6. Code Naming Conventions
+- **Semantic Naming**: All variable names, parameters, functions, and state values MUST be self-descriptive and semantic (e.g. `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`). Avoid single-letter variables (like `u`, `q`, `e`, `i`, `val`) or non-descriptive names (like `data`, `res`, `items`, `loading`, `error`).
+
 ## AGENTS.md Maintenance Policy
 1. **Automated Documentation**: Whenever new technologies, routes, endpoints, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
 2. **User Confirmation Prompt**: Always ask the user if newly introduced technologies or features should be added to `AGENTS.md`.
+3. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
