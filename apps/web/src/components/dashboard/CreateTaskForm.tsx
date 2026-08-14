@@ -6,9 +6,9 @@ import { Plus } from 'lucide-react';
 interface CreateTaskFormProps {
   title: string;
   description: string;
-  setTitle: (val: string) => void;
-  setDescription: (val: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  setTitle: (newTitle: string) => void;
+  setDescription: (newDescription: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
 }
 
 export function CreateTaskForm({
@@ -31,7 +31,7 @@ export function CreateTaskForm({
           <Input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(event) => setTitle(event.target.value)}
             placeholder="What needs to be done?"
             required
             className="bg-background/50 border-border/80 focus-visible:ring-emerald-500/30"
@@ -43,7 +43,7 @@ export function CreateTaskForm({
           </label>
           <Textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(event) => setDescription(event.target.value)}
             placeholder="Provide some details..."
             rows={3}
             className="bg-background/50 border-border/80 focus-visible:ring-emerald-500/30 resize-none"
