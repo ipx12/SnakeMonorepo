@@ -38,24 +38,14 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    let isCancelled = false;
-
     if (!user) {
-      queueMicrotask(() => {
-        if (!isCancelled) {
-          setTaskList([]);
-          setIsTasksLoading(false);
-        }
-      });
+      setTaskList([]);
+      setIsTasksLoading(false);
       return;
     }
 
-    queueMicrotask(() => {
-      if (!isCancelled) {
-        setIsTasksLoading(true);
-      }
-    });
-
+    let isCancelled = false;
+    setIsTasksLoading(true);
     getItems()
       .then((fetchedTasks) => {
         if (!isCancelled) {

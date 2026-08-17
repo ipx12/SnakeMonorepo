@@ -3,11 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/AuthContext';
 import { registerSchema, RegisterFormData } from '@/lib/schemas/auth';
-import { UserRole } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Mail, User as UserIcon, Eye, EyeOff, UserPlus, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -25,7 +24,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
-    control,
+    watch,
     setValue,
     formState: { errors },
   } = useForm<RegisterFormData>({
@@ -35,11 +34,11 @@ export default function RegisterPage() {
       email: '',
       password: '',
       confirmPassword: '',
-      role: UserRole.User,
+      role: 'user',
     },
   });
 
-  const selectedRole = useWatch({ control, name: 'role' });
+  const selectedRole = watch('role');
 
   const onSubmit = async (data: RegisterFormData) => {
     setServerError('');
@@ -65,7 +64,7 @@ export default function RegisterPage() {
   if (isRedirecting) {
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-background text-foreground flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden font-sans">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-tr from-teal-500/15 via-emerald-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-teal-500/15 via-emerald-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
         <div className="p-8 rounded-2xl bg-secondary/25 border border-border/80 backdrop-blur-xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm text-center animate-in fade-in zoom-in-95 duration-200">
           <div className="size-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <div className="size-7 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
@@ -82,7 +81,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background text-foreground flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
       {/* Background radial glowing effect */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-tr from-teal-500/15 via-emerald-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-teal-500/15 via-emerald-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
 
       <div className="w-full max-w-md space-y-6">
         {/* Card Header */}
@@ -90,7 +89,7 @@ export default function RegisterPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-semibold uppercase tracking-wider mb-2">
             <Sparkles className="size-3.5" /> User Creation
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-linear-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
             Create New Account
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -204,9 +203,9 @@ export default function RegisterPage() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setValue('role', UserRole.User)}
+                  onClick={() => setValue('role', 'user')}
                   className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    selectedRole === UserRole.User
+                    selectedRole === 'user'
                       ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-sm'
                       : 'bg-background/40 border-border/70 text-muted-foreground hover:bg-background/70'
                   }`}
@@ -215,9 +214,9 @@ export default function RegisterPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setValue('role', UserRole.Admin)}
+                  onClick={() => setValue('role', 'admin')}
                   className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    selectedRole === UserRole.Admin
+                    selectedRole === 'admin'
                       ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 shadow-sm'
                       : 'bg-background/40 border-border/70 text-muted-foreground hover:bg-background/70'
                   }`}
@@ -230,7 +229,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 bg-linear-to-r from-emerald-500 via-teal-600 to-indigo-600 hover:from-emerald-400 hover:to-teal-500 text-primary-foreground font-semibold py-2.5 rounded-xl transition-all cursor-pointer shadow-lg shadow-teal-500/20 active:scale-[0.98] gap-2"
+              className="w-full mt-2 bg-gradient-to-r from-emerald-500 via-teal-600 to-indigo-600 hover:from-emerald-400 hover:to-teal-500 text-primary-foreground font-semibold py-2.5 rounded-xl transition-all cursor-pointer shadow-lg shadow-teal-500/20 active:scale-[0.98] gap-2"
             >
               {loading ? (
                 <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

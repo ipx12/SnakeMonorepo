@@ -36,7 +36,7 @@ export interface Item {
   createdAt: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const BASE_URL = 'http://localhost:3001/api';
 const API_URL = `${BASE_URL}/items`;
 
 // Authentication API calls via Better Auth
@@ -46,7 +46,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
     password: payload.password,
     name: payload.name,
     role: payload.role || UserRole.User,
-  } as Parameters<typeof authClient.signUp.email>[0]);
+  } as any);
 
   if (error || !data?.user) {
     throw new Error(error?.message || 'Failed to register account');
@@ -56,7 +56,7 @@ export async function registerUser(payload: RegisterPayload): Promise<AuthRespon
     id: data.user.id,
     name: data.user.name || '',
     email: data.user.email,
-    role: (data.user as { role?: UserRole }).role || payload.role || UserRole.User,
+    role: (data.user as any).role || payload.role || UserRole.User,
     createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
   };
 
@@ -77,7 +77,7 @@ export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
     id: data.user.id,
     name: data.user.name || '',
     email: data.user.email,
-    role: (data.user as { role?: UserRole }).role || UserRole.User,
+    role: (data.user as any).role || UserRole.User,
     createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
   };
 
@@ -93,7 +93,7 @@ export async function getCurrentUser(): Promise<User | null> {
       id: data.user.id,
       name: data.user.name || '',
       email: data.user.email,
-      role: (data.user as { role?: UserRole }).role || UserRole.User,
+      role: (data.user as any).role || UserRole.User,
       createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
     };
   } catch {

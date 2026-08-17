@@ -5,7 +5,7 @@
  */
 export class AsyncTaskQueue {
   private concurrency: number;
-  private queueList: Array<() => Promise<unknown>> = [];
+  private queueList: Array<() => Promise<any>> = [];
   private activeCount: number = 0;
 
   constructor(concurrency: number) {
@@ -19,7 +19,7 @@ export class AsyncTaskQueue {
    * Adds an asynchronous task to the queue.
    * @param task A function that returns a Promise.
    */
-  queue(task: () => Promise<unknown>): void {
+  queue(task: () => Promise<any>): void {
     if (typeof task !== 'function') {
       throw new Error('Task must be a function returning a Promise');
     }
@@ -44,15 +44,15 @@ export class AsyncTaskQueue {
     // to guarantee activeCount is properly decremented even if task throws synchronously.
     Promise.resolve()
       .then(() => task())
-      .then((taskResult) => {
-        if (taskResult !== undefined) {
-          console.log(taskResult);
+      .then((val) => {
+        if (val !== undefined) {
+          console.log(val);
         }
       })
-      .catch((taskError) => {
+      .catch((err) => {
         // Silently ignore rejections as per requirement, but log the text if present
-        if (taskError !== undefined) {
-          console.log(taskError instanceof Error ? taskError.message : taskError);
+        if (err !== undefined) {
+          console.log(err instanceof Error ? err.message : err);
         }
       })
       .finally(() => {
