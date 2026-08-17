@@ -58,7 +58,7 @@ export default function LoginPage() {
   if (isRedirecting) {
     return (
       <div className="min-h-[calc(100vh-4rem)] bg-background text-foreground flex flex-col items-center justify-center py-12 px-4 relative overflow-hidden font-sans">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-emerald-500/15 via-teal-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-tr from-emerald-500/15 via-teal-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
         <div className="p-8 rounded-2xl bg-secondary/25 border border-border/80 backdrop-blur-xl shadow-2xl flex flex-col items-center space-y-4 max-w-sm text-center animate-in fade-in zoom-in-95 duration-200">
           <div className="size-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <div className="size-7 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" />
@@ -75,7 +75,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background text-foreground flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
       {/* Background radial glowing effect */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-tr from-emerald-500/15 via-teal-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-linear-to-tr from-emerald-500/15 via-teal-500/10 to-indigo-500/15 blur-3xl rounded-full pointer-events-none -z-10" />
 
       <div className="w-full max-w-md space-y-6">
         {/* Card Header */}
@@ -83,7 +83,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-2">
             <Sparkles className="size-3.5" /> Authorization Portal
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-linear-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
             Welcome Back
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -172,7 +172,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-primary-foreground font-semibold py-2.5 rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-500/20 active:scale-[0.98] gap-2"
+              className="w-full mt-2 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-primary-foreground font-semibold py-2.5 rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-500/20 active:scale-[0.98] gap-2"
             >
               {loading ? (
                 <div className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

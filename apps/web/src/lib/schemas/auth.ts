@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { UserRole } from '../roles';
 
 export const loginSchema = z.object({
   email: z.email('Please enter a valid email address'),
@@ -24,7 +25,7 @@ export const registerSchema = z
     confirmPassword: z
       .string()
       .min(1, 'Confirm password is required'),
-    role: z.enum(['user', 'admin']),
+    role: z.nativeEnum(UserRole),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
