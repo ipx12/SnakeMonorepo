@@ -36,7 +36,7 @@ export interface Item {
   createdAt: string;
 }
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 const API_URL = `${BASE_URL}/items`;
 
 // Authentication API calls via Better Auth
