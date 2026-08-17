@@ -36,7 +36,7 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
     <div className="p-5 rounded-2xl bg-secondary/25 border border-border/80 backdrop-blur-lg flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
       {!authLoading && user ? (
         <div className="flex items-center gap-3">
-          <div className="size-11 rounded-full bg-linear-to-tr from-emerald-500 via-teal-500 to-indigo-500 flex items-center justify-center text-white font-bold text-base shadow-md">
+          <div className="size-11 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-500 flex items-center justify-center text-white font-bold text-base shadow-md">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div>

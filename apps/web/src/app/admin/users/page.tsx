@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Users,
+  ShieldCheck,
   ShieldAlert,
   ArrowLeft,
   Search,
@@ -46,24 +47,12 @@ export default function AdminUsersPage() {
   };
 
   useEffect(() => {
-    let isCancelled = false;
     if (isAuthLoading) return;
     if (user?.role === UserRole.Admin) {
-      queueMicrotask(() => {
-        if (!isCancelled) {
-          fetchUsers();
-        }
-      });
+      fetchUsers();
     } else {
-      queueMicrotask(() => {
-        if (!isCancelled) {
-          setIsUsersLoading(false);
-        }
-      });
+      setIsUsersLoading(false);
     }
-    return () => {
-      isCancelled = true;
-    };
   }, [user, isAuthLoading]);
 
   const filteredUsers = usersList.filter((userItem) => {
@@ -132,7 +121,7 @@ export default function AdminUsersPage() {
               <span className="text-xs text-muted-foreground">/</span>
               <span className="text-xs font-semibold text-purple-400">Admin Panel</span>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-linear-to-r from-purple-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-purple-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent flex items-center gap-3">
               <Users className="size-8 text-purple-400" /> All System Users
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -243,7 +232,7 @@ export default function AdminUsersPage() {
                         <tr className="hover:bg-secondary/30 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="size-9 rounded-full bg-linear-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
+                              <div className="size-9 rounded-full bg-gradient-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
                                 {userItem.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex flex-col">

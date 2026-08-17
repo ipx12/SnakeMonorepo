@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { UserRole } from '@/lib/roles';
 import { Button } from '@/components/ui/button';
-import { LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
+import { User as UserIcon, LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
 
 export function Navbar() {
   const { user, loading, logout } = useAuth();
@@ -16,11 +16,11 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand logo */}
         <Link href="/" className="flex items-center gap-2.5 group transition-transform active:scale-95">
-          <div className="size-9 rounded-xl bg-linear-to-br from-emerald-400 via-teal-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-all">
+          <div className="size-9 rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-all">
             <Sparkles className="size-5 text-white animate-pulse" />
           </div>
           <div className="flex flex-col">
-            <span className="font-extrabold text-lg tracking-tight bg-linear-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
+            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-300 bg-clip-text text-transparent">
               Watermelon UI
             </span>
             <span className="text-[10px] text-muted-foreground -mt-1 font-medium tracking-wider uppercase">
@@ -60,7 +60,7 @@ export function Navbar() {
           {!loading && user ? (
             <div className="flex items-center gap-3 pl-2 border-l border-border/80">
               <div className="hidden sm:flex items-center gap-2.5 px-3 py-1 rounded-full bg-secondary/40 border border-border/50">
-                <div className="size-6 rounded-full bg-linear-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+                <div className="size-6 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center text-xs font-bold text-white shadow-sm">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col">
@@ -99,7 +99,7 @@ export function Navbar() {
               <Link href="/register">
                 <Button
                   size="sm"
-                  className="bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs sm:text-sm font-medium gap-1.5 cursor-pointer shadow-md shadow-emerald-500/10"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs sm:text-sm font-medium gap-1.5 cursor-pointer shadow-md shadow-emerald-500/10"
                 >
                   <UserPlus className="size-4" />
                   <span>Register</span>

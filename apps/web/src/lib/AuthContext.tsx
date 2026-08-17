@@ -3,7 +3,6 @@
 import React, { createContext, useContext } from 'react';
 import { authClient, useSession } from './auth-client';
 import { User, LoginPayload, RegisterPayload } from './api';
-import { UserRole } from './roles';
 
 interface AuthContextType {
   user: User | null;
@@ -23,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: session.user.id,
         name: session.user.name || '',
         email: session.user.email,
-        role: (session.user as { role?: UserRole }).role || UserRole.User,
+        role: (session.user as any).role || 'user',
         createdAt: session.user.createdAt ? session.user.createdAt.toString() : new Date().toISOString(),
       }
     : null;
@@ -46,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: data.user.id,
       name: data.user.name || '',
       email: data.user.email,
-      role: (data.user as { role?: UserRole }).role || UserRole.User,
+      role: (data.user as any).role || 'user',
       createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
     };
   };
@@ -56,8 +55,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: payload.email,
       password: payload.password,
       name: payload.name,
-      role: payload.role || UserRole.User,
-    } as Parameters<typeof authClient.signUp.email>[0]);
+      role: payload.role || 'user',
+    } as any);
 
     if (error) {
       throw new Error(error.message || 'Failed to create user account.');
@@ -71,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: data.user.id,
       name: data.user.name || '',
       email: data.user.email,
-      role: (data.user as { role?: UserRole }).role || payload.role || UserRole.User,
+      role: (data.user as any).role || payload.role || 'user',
       createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
     };
   };
