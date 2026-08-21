@@ -1,10 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../index';
+import { db } from '../auth';
 
-// Mock auth module session helper for supertest endpoints
-vi.mock('../auth', () => {
+// Mock auth session helper for supertest endpoints while keeping real DB
+vi.mock('../auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auth')>();
   return {
+    ...actual,
     auth: {
       api: {
         getSession: vi.fn().mockImplementation(async ({ headers }: { headers: Headers }) => {
@@ -33,22 +36,59 @@ vi.mock('../auth', () => {
         }),
       },
     },
-    db: {
-      selectFrom: vi.fn(),
-    },
   };
 });
 
-describe('Items API Endpoints Integration', () => {
-  it('should return 401 Unauthorized for unauthenticated GET /api/items', async () => {
-    const response = await request(app).get('/api/items');
+describe('Tasks API Endpoints Integration & Database Persistence', () => {
+  beforeEach(async () => {
+    // Clean tasks table before each test to ensure test isolation
+    try {
+      await db.deleteFrom('task').execute();
+      await db.deleteFrom('user').execute();
+    } catch {
+      // Table will be created by initDb
+    }
+
+    // Insert mock users to satisfy FOREIGN KEY constraint on task.userId
+    const now = Date.now();
+    await db
+      .insertInto('user')
+      .values([
+        {
+          id: 'user-test-123',
+          name: 'Test User',
+          email: 'test@example.com',
+          emailVerified: 1,
+          role: 'user',
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: 'admin-test-999',
+          name: 'Admin User',
+          email: 'admin@example.com',
+          emailVerified: 1,
+          role: 'admin',
+          createdAt: now,
+          updatedAt: now,
+        },
+      ])
+      .execute();
+  });
+
+  afterAll(async () => {
+    await db.destroy();
+  });
+
+  it('should return 401 Unauthorized for unauthenticated GET /api/tasks', async () => {
+    const response = await request(app).get('/api/tasks');
     expect(response.status).toBe(401);
     expect(response.body.message).toContain('Authentication required');
   });
 
-  it('should return default items for authenticated GET /api/items', async () => {
+  it('should seed and return default tasks for authenticated GET /api/tasks in database', async () => {
     const response = await request(app)
-      .get('/api/items')
+      .get('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token');
 
     expect(response.status).toBe(200);
@@ -56,33 +96,86 @@ describe('Items API Endpoints Integration', () => {
     expect(response.body.length).toBeGreaterThan(0);
     expect(response.body[0]).toHaveProperty('title');
     expect(response.body[0].userId).toBe('user-test-123');
+
+    // Verify default tasks were written to SQLite DB
+    const dbRows = await db.selectFrom('task').selectAll().where('userId', '=', 'user-test-123').execute();
+    expect(dbRows.length).toBe(response.body.length);
   });
 
-  it('should create a new task item via POST /api/items', async () => {
+  it('should create a new task in SQLite via POST /api/tasks and persist it', async () => {
     const newTaskPayload = {
       title: 'Write Unit Tests with Vitest',
       description: 'Cover API endpoints with supertest',
     };
 
-    const response = await request(app)
-      .post('/api/items')
+    const postResponse = await request(app)
+      .post('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token')
       .send(newTaskPayload);
 
-    expect(response.status).toBe(201);
-    expect(response.body.title).toBe(newTaskPayload.title);
-    expect(response.body.description).toBe(newTaskPayload.description);
-    expect(response.body.completed).toBe(false);
-    expect(response.body.userId).toBe('user-test-123');
+    expect(postResponse.status).toBe(201);
+    expect(postResponse.body.title).toBe(newTaskPayload.title);
+    expect(postResponse.body.description).toBe(newTaskPayload.description);
+    expect(postResponse.body.completed).toBe(false);
+    expect(postResponse.body.userId).toBe('user-test-123');
+
+    const createdTaskId = postResponse.body.id;
+
+    // Verify task is persisted directly in SQLite database
+    const dbRecord = await db.selectFrom('task').selectAll().where('id', '=', createdTaskId).executeTakeFirst();
+    expect(dbRecord).toBeDefined();
+    expect(dbRecord?.title).toBe(newTaskPayload.title);
+
+    // Verify task is retrieved on subsequent GET request
+    const getResponse = await request(app)
+      .get('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token');
+
+    expect(getResponse.status).toBe(200);
+    const foundTask = getResponse.body.find((taskItem: any) => taskItem.id === createdTaskId);
+    expect(foundTask).toBeDefined();
+    expect(foundTask.title).toBe(newTaskPayload.title);
   });
 
-  it('should return 400 Bad Request when creating item without title', async () => {
+  it('should update and delete task in SQLite database', async () => {
+    // 1. Create task
+    const createRes = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'Task to update and delete' });
+    const taskId = createRes.body.id;
+
+    // 2. Update task in SQLite
+    const updateRes = await request(app)
+      .put(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ completed: true, title: 'Updated task title' });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.completed).toBe(true);
+    expect(updateRes.body.title).toBe('Updated task title');
+
+    const dbRowUpdated = await db.selectFrom('task').selectAll().where('id', '=', taskId).executeTakeFirst();
+    expect(dbRowUpdated?.completed).toBe(1);
+
+    // 3. Delete task from SQLite
+    const deleteRes = await request(app)
+      .delete(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-user-token');
+
+    expect(deleteRes.status).toBe(200);
+
+    const dbRowDeleted = await db.selectFrom('task').selectAll().where('id', '=', taskId).executeTakeFirst();
+    expect(dbRowDeleted).toBeUndefined();
+  });
+
+  it('should return 400 Bad Request when creating task without title', async () => {
     const invalidTaskPayload = {
       description: 'Missing title property',
     };
 
     const response = await request(app)
-      .post('/api/items')
+      .post('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token')
       .send(invalidTaskPayload);
 

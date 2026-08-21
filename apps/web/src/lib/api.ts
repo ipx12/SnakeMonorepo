@@ -27,7 +27,7 @@ export interface LoginPayload {
   password: string;
 }
 
-export interface Item {
+export interface Task {
   id: string;
   title: string;
   description: string;
@@ -36,8 +36,11 @@ export interface Item {
   createdAt: string;
 }
 
+// Backward compatibility alias for Item
+export type Item = Task;
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-const API_URL = `${BASE_URL}/items`;
+const TASKS_API_URL = `${BASE_URL}/tasks`;
 
 // Authentication API calls via Better Auth
 export async function registerUser(payload: RegisterPayload): Promise<AuthResponse> {
@@ -109,42 +112,50 @@ export async function logoutUser(): Promise<void> {
   }
 }
 
-// Items API calls
-export async function getItems(): Promise<Item[]> {
-  const apiResponse = await fetch(API_URL, { credentials: 'include' });
-  if (!apiResponse.ok) throw new Error('Failed to fetch items');
+// Tasks API calls
+export async function getTasks(): Promise<Task[]> {
+  const apiResponse = await fetch(TASKS_API_URL, { credentials: 'include' });
+  if (!apiResponse.ok) throw new Error('Failed to fetch tasks');
   return apiResponse.json();
 }
 
-export async function createItem(title: string, description: string): Promise<Item> {
-  const apiResponse = await fetch(API_URL, {
+export const getItems = getTasks;
+
+export async function createTask(title: string, description: string): Promise<Task> {
+  const apiResponse = await fetch(TASKS_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, description }),
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to create item');
+  if (!apiResponse.ok) throw new Error('Failed to create task');
   return apiResponse.json();
 }
 
-export async function updateItem(itemId: string, updates: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<Item> {
-  const apiResponse = await fetch(`${API_URL}/${itemId}`, {
+export const createItem = createTask;
+
+export async function updateTask(taskId: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>): Promise<Task> {
+  const apiResponse = await fetch(`${TASKS_API_URL}/${taskId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to update item');
+  if (!apiResponse.ok) throw new Error('Failed to update task');
   return apiResponse.json();
 }
 
-export async function deleteItem(itemId: string): Promise<void> {
-  const apiResponse = await fetch(`${API_URL}/${itemId}`, {
+export const updateItem = updateTask;
+
+export async function deleteTask(taskId: string): Promise<void> {
+  const apiResponse = await fetch(`${TASKS_API_URL}/${taskId}`, {
     method: 'DELETE',
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to delete item');
+  if (!apiResponse.ok) throw new Error('Failed to delete task');
 }
+
+export const deleteItem = deleteTask;
 
 export interface AdminUserDetail {
   id: string;

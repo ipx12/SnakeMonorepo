@@ -32,7 +32,7 @@ export const auth = betterAuth({
 });
 
 // Auto-initialize required Better Auth tables and seed demo user in SQLite
-async function initDb() {
+export async function initDb() {
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS user (
@@ -96,6 +96,25 @@ async function initDb() {
         updatedAt INTEGER
       );
     `.execute(db);
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS task (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        completed INTEGER NOT NULL DEFAULT 0,
+        userId TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
+      );
+    `.execute(db);
+
+    // Migration helper: copy any rows from legacy 'item' table to 'task' if 'item' exists
+    try {
+      await sql`INSERT OR IGNORE INTO task SELECT * FROM item`.execute(db);
+    } catch {
+      // Legacy item table does not exist or already migrated
+    }
 
     console.log('[Better Auth] Database schema verified successfully.');
 
