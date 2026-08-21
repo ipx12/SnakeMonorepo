@@ -39,6 +39,10 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Frontend (`apps/web`)**: Next.js App Router on Port 3000.
 - **Backend (`apps/api`)**: Express server on Port 3001 (`/api/admin/users` for admin endpoints).
 - **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`).
+- **Database Schema**:
+  - `user`: User account details (`id`, `name`, `email`, `role`, `createdAt`, `updatedAt`).
+  - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`).
+  - `task`: User task dashboard items (`id`, `title`, `description`, `completed`, `userId`, `createdAt`). Tasks are fully persisted in SQLite across API server restarts.
 
 ### 5. Testing Infrastructure & Strategy
 
