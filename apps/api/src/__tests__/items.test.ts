@@ -182,4 +182,35 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Title is required');
   });
+
+  it('should return 401 Unauthorized for unauthenticated GET /api/admin/users', async () => {
+    const response = await request(app).get('/api/admin/users');
+    expect(response.status).toBe(401);
+    expect(response.body.message).toContain('Authentication required');
+  });
+
+  it('should return 403 Forbidden for non-admin user accessing GET /api/admin/users', async () => {
+    const response = await request(app)
+      .get('/api/admin/users')
+      .set('Authorization', 'Bearer mock-user-token');
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toContain('Forbidden');
+  });
+
+  it('should return 200 OK and list of users for admin user accessing GET /api/admin/users', async () => {
+    const response = await request(app)
+      .get('/api/admin/users')
+      .set('Authorization', 'Bearer mock-admin-token');
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBe(2);
+
+    const adminUserRecord = response.body.find((userRecord: any) => userRecord.id === 'admin-test-999');
+    expect(adminUserRecord).toBeDefined();
+    expect(adminUserRecord.email).toBe('admin@example.com');
+    expect(adminUserRecord.role).toBe('admin');
+  });
 });
+
