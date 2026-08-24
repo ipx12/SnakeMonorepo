@@ -226,6 +226,37 @@ app.put('/api/tasks/:id', async (req, res) => {
   }
 });
 
+// GET /api/admin/users - Read list of all registered users (Admin only)
+app.get('/api/admin/users', async (req, res) => {
+  const session = await getAuthSession(req);
+  if (!session?.user) {
+    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
+  }
+
+  const userRole = (session.user as any).role;
+  if (userRole !== UserRole.Admin) {
+    return res.status(403).json({ message: 'Forbidden. Admin access required.' });
+  }
+
+  try {
+    const rawUsers = await db.selectFrom('user').selectAll().execute();
+    const formattedUsers = rawUsers.map((userRow: any) => ({
+      id: userRow.id,
+      name: userRow.name || '',
+      email: userRow.email,
+      emailVerified: Boolean(userRow.emailVerified),
+      image: userRow.image || null,
+      role: userRow.role || UserRole.User,
+      createdAt: typeof userRow.createdAt === 'number' ? new Date(userRow.createdAt).toISOString() : userRow.createdAt,
+      updatedAt: typeof userRow.updatedAt === 'number' ? new Date(userRow.updatedAt).toISOString() : userRow.updatedAt,
+    }));
+
+    res.json(formattedUsers);
+  } catch (caughtError: any) {
+    res.status(500).json({ message: 'Failed to fetch users list', error: caughtError.message });
+  }
+});
+
 // DELETE /api/tasks/:id - Delete task
 app.delete('/api/tasks/:id', async (req, res) => {
   const session = await getAuthSession(req);

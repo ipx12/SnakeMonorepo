@@ -23,6 +23,7 @@ vi.mock('@/lib/AuthContext', () => ({
 import HomePage from '../app/page';
 import LoginPage from '../app/login/page';
 import RegisterPage from '../app/register/page';
+import AdminUsersPage from '../app/admin/users/page';
 
 describe('App Router Pages Routing', () => {
   it('should render the Home page component without crashing', () => {
@@ -39,4 +40,12 @@ describe('App Router Pages Routing', () => {
     render(<RegisterPage />);
     expect(screen.getByRole('heading', { name: /Create New Account/i })).toBeInTheDocument();
   });
+
+  it('should render the Admin Users page component without crashing', async () => {
+    render(<AdminUsersPage />);
+    expect(await screen.findByText(/Access Restricted/i)).toBeInTheDocument();
+  });
 });
+
+
+
