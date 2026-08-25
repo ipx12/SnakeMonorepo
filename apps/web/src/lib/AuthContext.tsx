@@ -3,7 +3,7 @@
 import React, { createContext, useContext } from 'react';
 import { authClient, useSession } from './auth-client';
 import { User, LoginPayload, RegisterPayload } from './api';
-import { UserRole } from './roles';
+import { UserRole } from '@snake/types';
 
 interface AuthContextType {
   user: User | null;

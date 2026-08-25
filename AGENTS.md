@@ -38,6 +38,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 - **Frontend (`apps/web`)**: Next.js App Router on Port 3000.
 - **Backend (`apps/api`)**: Express server on Port 3001 (`/api/admin/users` for admin endpoints).
+- **Shared Types (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces, enums (`UserRole`), and API payloads shared across frontend and backend.
 - **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`).
 - **Database Schema**:
   - `user`: User account details (`id`, `name`, `email`, `role`, `createdAt`, `updatedAt`).
@@ -57,6 +58,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - `apps/web/src/components/`: Visual UI components (`components/ui` for primitives, `components/dashboard` for feature widgets).
 - `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), authentication client (`auth-client.ts`), and helper utilities.
 - `apps/api/src/`: Express backend code, database connections, and routes.
+- `packages/types/`: Shared TypeScript models and interfaces (`@snake/types`).
 
 ### 6. Code Naming Conventions
 

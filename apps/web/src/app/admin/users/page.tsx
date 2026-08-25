@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import { getAdminUsers, type AdminUserDetail } from '@/lib/api';
-import { UserRole } from '@/lib/roles';
+import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

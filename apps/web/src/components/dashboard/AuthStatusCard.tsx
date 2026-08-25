@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus, ShieldCheck, User as UserIcon, Crown, UserCheck, Users } from 'lucide-react';
 import type { User } from '@/lib/api';
-import { UserRole } from '@/lib/roles';
+import { UserRole } from '@snake/types';
 
 interface AuthStatusCardProps {
   user: User | null;

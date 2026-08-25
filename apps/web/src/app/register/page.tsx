@@ -7,7 +7,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/AuthContext';
 import { registerSchema, RegisterFormData } from '@/lib/schemas/auth';
-import { UserRole } from '@/lib/roles';
+import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Mail, User as UserIcon, Eye, EyeOff, UserPlus, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';

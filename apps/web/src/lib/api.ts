@@ -1,43 +1,16 @@
+import {
+  UserRole,
+  type User,
+  type AuthResponse,
+  type RegisterPayload,
+  type LoginPayload,
+  type Task,
+  type Item,
+  type AdminUserDetail,
+} from '@snake/types';
 import { authClient } from './auth-client';
-import { UserRole } from './roles';
-export { UserRole };
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  createdAt: string;
-}
-
-export interface AuthResponse {
-  token?: string;
-  user: User;
-}
-
-export interface RegisterPayload {
-  name: string;
-  email: string;
-  password: string;
-  role?: UserRole;
-}
-
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  completed: boolean;
-  userId?: string;
-  createdAt: string;
-}
-
-// Backward compatibility alias for Item
-export type Item = Task;
+export { UserRole, type User, type AuthResponse, type RegisterPayload, type LoginPayload, type Task, type Item, type AdminUserDetail };
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 const TASKS_API_URL = `${BASE_URL}/tasks`;
@@ -156,17 +129,6 @@ export async function deleteTask(taskId: string): Promise<void> {
 }
 
 export const deleteItem = deleteTask;
-
-export interface AdminUserDetail {
-  id: string;
-  name: string;
-  email: string;
-  emailVerified: boolean;
-  image: string | null;
-  role: UserRole;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export async function getAdminUsers(): Promise<AdminUserDetail[]> {
   const apiResponse = await fetch(`${BASE_URL}/admin/users`, { credentials: 'include' });
