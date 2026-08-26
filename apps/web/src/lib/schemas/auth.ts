@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserRole } from '../roles';
+import { UserRole } from '@snake/types';
 
 export const loginSchema = z.object({
   email: z.email('Please enter a valid email address'),

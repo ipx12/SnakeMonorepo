@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { loginSchema, registerSchema } from '../lib/schemas/auth';
-import { UserRole } from '../lib/roles';
+import { UserRole } from '@snake/types';
 
 describe('Auth Validation Schemas', () => {
   describe('loginSchema', () => {

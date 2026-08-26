@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { UserRole } from '@/lib/roles';
+import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
 

@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { auth, db } from './auth';
-import { UserRole } from './roles';
+import { UserRole, type Task } from '@snake/types';
 
 dotenv.config();
 
@@ -29,15 +29,6 @@ app.all('/api/auth/*', toNodeHandler(auth));
 
 app.use(express.json());
 app.use(cookieParser());
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  completed: boolean;
-  userId: string;
-  createdAt: string;
-}
 
 // Helper to get session from Express request
 const getAuthSession = async (req: express.Request) => {
