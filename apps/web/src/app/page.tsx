@@ -91,13 +91,25 @@ export default function Home() {
   };
 
   const handleToggleTaskCompletion = async (targetTask: Item) => {
+    const previousTaskList = [...taskList];
+    const newCompletedStatus = !targetTask.completed;
+
+    // Optimistic UI update
+    setTaskList((currentTasks) =>
+      currentTasks.map((currentTask) =>
+        currentTask.id === targetTask.id ? { ...currentTask, completed: newCompletedStatus } : currentTask
+      )
+    );
+
     try {
-      const updatedTask = await updateItem(targetTask.id, { completed: !targetTask.completed });
-      setTaskList((previousTasks) =>
-        previousTasks.map((currentTask) => (currentTask.id === targetTask.id ? updatedTask : currentTask))
+      const updatedTask = await updateItem(targetTask.id, { completed: newCompletedStatus });
+      setTaskList((currentTasks) =>
+        currentTasks.map((currentTask) => (currentTask.id === targetTask.id ? updatedTask : currentTask))
       );
     } catch (caughtError: unknown) {
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+      // Rollback to previous state on failure
+      setTaskList(previousTaskList);
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to update task');
     }
   };
 
@@ -126,11 +138,17 @@ export default function Home() {
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    const previousTaskList = [...taskList];
+
+    // Optimistic UI update
+    setTaskList((currentTasks) => currentTasks.filter((currentTask) => currentTask.id !== taskId));
+
     try {
       await deleteItem(taskId);
-      setTaskList((previousTasks) => previousTasks.filter((currentTask) => currentTask.id !== taskId));
     } catch (caughtError: unknown) {
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+      // Rollback to previous state on failure
+      setTaskList(previousTaskList);
+      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to delete task');
     }
   };
 

@@ -34,16 +34,17 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Schema Validation**: **Zod** (`zod`).
 - **Schema Resolver**: `@hookform/resolvers/zod` (`zodResolver`).
 
-### 4. Monorepo Architecture & Database
+### 4. Monorepo Architecture, Database & Optimization
 
-- **Frontend (`apps/web`)**: Next.js App Router on Port 3000.
-- **Backend (`apps/api`)**: Express server on Port 3001 (`/api/admin/users` for admin endpoints).
-- **Shared Types (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces, enums (`UserRole`), and API payloads shared across frontend and backend.
+- **Frontend (`apps/web`)**: Next.js App Router on Port 3000 with Optimistic UI updates and Debounced Search.
+- **Backend (`apps/api`)**: Express server on Port 3001 with Reusable Auth Middlewares (`requireAuth`, `requireAdmin`).
+- **Shared Types (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces, enums (`UserRole`), API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
 - **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`).
-- **Database Schema**:
+- **Database Schema & Indices**:
   - `user`: User account details (`id`, `name`, `email`, `role`, `createdAt`, `updatedAt`).
-  - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`).
-  - `task`: User task dashboard items (`id`, `title`, `description`, `completed`, `userId`, `createdAt`). Tasks are fully persisted in SQLite across API server restarts.
+  - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`). Index: `idx_session_userId` on `session(userId)`.
+  - `task`: User task dashboard items (`id`, `title`, `description`, `completed`, `userId`, `createdAt`). Index: `idx_task_userId` on `task(userId)`.
+- **Query Optimization**: Batch inserts for initial default user tasks, secure `crypto.randomUUID()` identifier generation, and SQL-level server-side pagination & filtering for `/api/admin/users`.
 
 ### 5. Testing Infrastructure & Strategy
 
