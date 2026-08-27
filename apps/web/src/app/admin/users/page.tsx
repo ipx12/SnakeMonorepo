@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
-import { getAdminUsers, type AdminUserDetail } from '@/lib/api';
+import { getAdminUsers, type AdminUserDetail, type PaginationMeta } from '@/lib/api';
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,22 +22,50 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const { user, loading: isAuthLoading } = useAuth();
   const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    totalCount: 0,
+    totalPages: 1,
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [isUsersLoading, setIsUsersLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+      setCurrentPage(1); // Reset to first page on search query change
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchQuery]);
+
+  const fetchUsers = async (targetPage: number = currentPage, targetLimit: number = pageSize, targetSearch: string = debouncedSearchQuery) => {
     try {
       setIsUsersLoading(true);
       setErrorMessage('');
-      const fetchedUsers = await getAdminUsers();
-      setUsersList(fetchedUsers);
+      const apiResponse = await getAdminUsers({
+        page: targetPage,
+        limit: targetLimit,
+        search: targetSearch,
+      });
+      setUsersList(apiResponse.users);
+      setPaginationMeta(apiResponse.pagination);
     } catch (caughtError: unknown) {
       setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to load the user list');
     } finally {
@@ -51,7 +79,7 @@ export default function AdminUsersPage() {
     if (user?.role === UserRole.Admin) {
       queueMicrotask(() => {
         if (!isCancelled) {
-          fetchUsers();
+          fetchUsers(currentPage, pageSize, debouncedSearchQuery);
         }
       });
     } else {
@@ -64,24 +92,23 @@ export default function AdminUsersPage() {
     return () => {
       isCancelled = true;
     };
-  }, [user, isAuthLoading]);
+  }, [user, isAuthLoading, currentPage, pageSize, debouncedSearchQuery]);
 
-  const filteredUsers = usersList.filter((userItem) => {
-    const searchQueryText = searchQuery.toLowerCase().trim();
-    if (!searchQueryText) return true;
-    return (
-      userItem.id.toLowerCase().includes(searchQueryText) ||
-      userItem.name.toLowerCase().includes(searchQueryText) ||
-      userItem.email.toLowerCase().includes(searchQueryText) ||
-      userItem.role.toLowerCase().includes(searchQueryText)
-    );
-  });
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > paginationMeta.totalPages) return;
+    setCurrentPage(newPage);
+  };
 
-  const totalUsers = usersList.length;
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
+  const totalUsers = paginationMeta.totalCount;
   const adminCount = usersList.filter((userItem) => userItem.role === UserRole.Admin).length;
   const regularCount = usersList.filter((userItem) => userItem.role === UserRole.User).length;
 
-  if (isAuthLoading || (isUsersLoading && usersList.length === 0)) {
+  if (isAuthLoading || (isUsersLoading && usersList.length === 0 && !searchQuery)) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
         <div className="py-20 px-8 border border-border/60 rounded-2xl bg-secondary/10 backdrop-blur-xl flex flex-col items-center justify-center space-y-4 shadow-xl">
@@ -117,6 +144,9 @@ export default function AdminUsersPage() {
     );
   }
 
+  const startRecordIndex = totalUsers === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endRecordIndex = Math.min(currentPage * pageSize, totalUsers);
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="w-full max-w-6xl space-y-8">
@@ -136,12 +166,12 @@ export default function AdminUsersPage() {
               <Users className="size-8 text-purple-400" /> All System Users
             </h1>
             <p className="text-sm text-muted-foreground">
-              A complete list of all registered accounts in the application with detailed information
+              A complete list of registered accounts with server-side search, pagination, and detailed user metrics
             </p>
           </div>
 
           <Button
-            onClick={fetchUsers}
+            onClick={() => fetchUsers(currentPage, pageSize, debouncedSearchQuery)}
             disabled={isUsersLoading}
             variant="outline"
             size="sm"
@@ -158,7 +188,7 @@ export default function AdminUsersPage() {
               <Users className="size-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Total Users</p>
+              <p className="text-xs text-muted-foreground font-medium">Total Registered</p>
               <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
             </div>
           </div>
@@ -168,7 +198,7 @@ export default function AdminUsersPage() {
               <Crown className="size-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Admins</p>
+              <p className="text-xs text-muted-foreground font-medium">Admins on Page</p>
               <p className="text-2xl font-bold text-amber-300">{adminCount}</p>
             </div>
           </div>
@@ -178,7 +208,7 @@ export default function AdminUsersPage() {
               <UserCheck className="size-6" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground font-medium">Regular Users</p>
+              <p className="text-xs text-muted-foreground font-medium">Users on Page</p>
               <p className="text-2xl font-bold text-emerald-300">{regularCount}</p>
             </div>
           </div>
@@ -191,7 +221,7 @@ export default function AdminUsersPage() {
         )}
 
         {/* Filter and Search Bar */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
@@ -201,6 +231,26 @@ export default function AdminUsersPage() {
               onChange={(event) => setSearchQuery(event.target.value)}
               className="pl-9 bg-secondary/30 border-border/80 text-sm focus-visible:ring-purple-500"
             />
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Rows per page:</span>
+            <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg border border-border/80">
+              {[5, 10, 20].map((sizeOption) => (
+                <button
+                  key={sizeOption}
+                  type="button"
+                  onClick={() => handlePageSizeChange(sizeOption)}
+                  className={`px-2.5 py-1 text-xs rounded font-medium transition-colors cursor-pointer ${
+                    pageSize === sizeOption
+                      ? 'bg-purple-500 text-white shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {sizeOption}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -219,14 +269,14 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {filteredUsers.length === 0 ? (
+                {usersList.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
-                      {searchQuery ? 'No users found matching your query' : 'No users found'}
+                      {isUsersLoading ? 'Loading users...' : debouncedSearchQuery ? 'No users found matching your query' : 'No users found'}
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((userItem) => {
+                  usersList.map((userItem) => {
                     const isExpanded = expandedUserId === userItem.id;
                     const createdDate = userItem.createdAt
                       ? new Date(userItem.createdAt).toLocaleDateString('en-US', {
@@ -354,8 +404,48 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-border/60 bg-secondary/25">
+            <div className="text-xs text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">{startRecordIndex}</span> to{' '}
+              <span className="font-semibold text-foreground">{endRecordIndex}</span> of{' '}
+              <span className="font-semibold text-foreground">{totalUsers}</span> accounts
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1 || isUsersLoading}
+                className="h-8 px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
+              >
+                <ChevronLeft className="size-3.5 mr-1" /> Previous
+              </Button>
+
+              <div className="flex items-center gap-1 px-2 text-xs font-semibold text-purple-300">
+                <span>Page</span>
+                <span className="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-200">
+                  {currentPage}
+                </span>
+                <span>of {paginationMeta.totalPages || 1}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= paginationMeta.totalPages || isUsersLoading}
+                className="h-8 px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
+              >
+                Next <ChevronRight className="size-3.5 ml-1" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

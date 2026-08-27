@@ -65,3 +65,21 @@ export interface UpdateTaskPayload {
   description?: string;
   completed?: boolean;
 }
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUserDetail[];
+  pagination: PaginationMeta;
+}
+
+export interface AdminUsersQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}

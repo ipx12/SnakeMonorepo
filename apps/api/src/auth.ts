@@ -109,6 +109,10 @@ export async function initDb() {
       );
     `.execute(db);
 
+    // Performance indices for foreign keys and queries
+    await sql`CREATE INDEX IF NOT EXISTS idx_task_userId ON task(userId);`.execute(db);
+    await sql`CREATE INDEX IF NOT EXISTS idx_session_userId ON session(userId);`.execute(db);
+
     // Migration helper: copy any rows from legacy 'item' table to 'task' if 'item' exists
     try {
       await sql`INSERT OR IGNORE INTO task SELECT * FROM item`.execute(db);
@@ -116,7 +120,7 @@ export async function initDb() {
       // Legacy item table does not exist or already migrated
     }
 
-    console.log('[Better Auth] Database schema verified successfully.');
+    console.log('[Better Auth] Database schema and performance indices verified successfully.');
 
     // Seed demo user if it doesn't exist yet
     const existingUser = await sql`SELECT id FROM user WHERE email = 'demo@watermelon.ui'`.execute(db);

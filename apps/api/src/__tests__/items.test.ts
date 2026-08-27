@@ -198,19 +198,36 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(response.body.message).toContain('Forbidden');
   });
 
-  it('should return 200 OK and list of users for admin user accessing GET /api/admin/users', async () => {
+  it('should return 200 OK with paginated list of users and metadata for admin user', async () => {
     const response = await request(app)
-      .get('/api/admin/users')
+      .get('/api/admin/users?page=1&limit=10')
       .set('Authorization', 'Bearer mock-admin-token');
 
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.length).toBe(2);
+    expect(response.body).toHaveProperty('users');
+    expect(response.body).toHaveProperty('pagination');
+    expect(Array.isArray(response.body.users)).toBe(true);
+    expect(response.body.users.length).toBe(2);
+    expect(response.body.pagination.totalCount).toBe(2);
+    expect(response.body.pagination.page).toBe(1);
+    expect(response.body.pagination.limit).toBe(10);
+    expect(response.body.pagination.totalPages).toBe(1);
 
-    const adminUserRecord = response.body.find((userRecord: any) => userRecord.id === 'admin-test-999');
+    const adminUserRecord = response.body.users.find((userRecord: any) => userRecord.id === 'admin-test-999');
     expect(adminUserRecord).toBeDefined();
     expect(adminUserRecord.email).toBe('admin@example.com');
     expect(adminUserRecord.role).toBe('admin');
+  });
+
+  it('should filter users with search parameter on GET /api/admin/users', async () => {
+    const response = await request(app)
+      .get('/api/admin/users?search=admin-test')
+      .set('Authorization', 'Bearer mock-admin-token');
+
+    expect(response.status).toBe(200);
+    expect(response.body.users.length).toBe(1);
+    expect(response.body.users[0].id).toBe('admin-test-999');
+    expect(response.body.pagination.totalCount).toBe(1);
   });
 });
 

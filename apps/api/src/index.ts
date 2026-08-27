@@ -1,10 +1,11 @@
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { randomUUID } from 'node:crypto';
 import { toNodeHandler, fromNodeHeaders } from 'better-auth/node';
 import { auth, db } from './auth';
-import { UserRole, type Task } from '@snake/types';
+import { UserRole, type Task, type AdminUsersResponse } from '@snake/types';
 
 dotenv.config();
 
@@ -31,12 +32,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Helper to get session from Express request
-const getAuthSession = async (req: express.Request) => {
+const getAuthSession = async (request: Request) => {
   try {
     return await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
+      headers: fromNodeHeaders(request.headers),
     });
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -51,25 +52,56 @@ const mapRowToTask = (row: any): Task => ({
   createdAt: row.createdAt,
 });
 
+// Reusable Authentication Middlewares
+interface AuthenticatedRequest extends Request {
+  userSession?: NonNullable<Awaited<ReturnType<typeof getAuthSession>>>;
+}
+
+const requireAuth = async (
+  request: AuthenticatedRequest,
+  response: Response,
+  next: NextFunction
+) => {
+  const session = await getAuthSession(request);
+  if (!session?.user) {
+    return response.status(401).json({ message: 'Authentication required. Please sign in.' });
+  }
+  request.userSession = session;
+  next();
+};
+
+const requireAdmin = async (
+  request: AuthenticatedRequest,
+  response: Response,
+  next: NextFunction
+) => {
+  const session = await getAuthSession(request);
+  if (!session?.user) {
+    return response.status(401).json({ message: 'Authentication required. Please sign in.' });
+  }
+  const userRole = (session.user as { role?: string }).role;
+  if (userRole !== UserRole.Admin) {
+    return response.status(403).json({ message: 'Forbidden. Admin access required.' });
+  }
+  request.userSession = session;
+  next();
+};
+
 // CRUD Routes
 
 // GET /api/tasks - Read user's tasks
-app.get('/api/tasks', async (req, res) => {
-  const session = await getAuthSession(req);
-  if (!session?.user) {
-    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-
-  const userId = session.user.id;
+app.get('/api/tasks', requireAuth, async (request: AuthenticatedRequest, response: Response) => {
+  const userId = request.userSession!.user.id;
   try {
     const rawRows = await db.selectFrom('task').selectAll().where('userId', '=', userId).execute();
     let userTasks = rawRows.map(mapRowToTask);
 
-    // If user has no tasks yet, seed initial default tasks for them into SQLite
+    // If user has no tasks yet, seed initial default tasks in a single batch insert
     if (userTasks.length === 0) {
+      const userRole = (request.userSession!.user as { role?: string }).role || UserRole.User;
       const defaultTasks: Task[] = [
         {
-          id: Math.random().toString(36).substring(2, 9),
+          id: randomUUID(),
           title: 'Welcome to your Task Dashboard',
           description: 'This is your private task list. Add, edit or complete your items.',
           completed: false,
@@ -77,81 +109,72 @@ app.get('/api/tasks', async (req, res) => {
           createdAt: new Date().toISOString(),
         },
         {
-          id: Math.random().toString(36).substring(2, 9),
+          id: randomUUID(),
           title: 'Explore User Roles',
-          description: `Your account role is '${(session.user as any).role || UserRole.User}'.`,
+          description: `Your account role is '${userRole}'.`,
           completed: true,
           userId: userId,
           createdAt: new Date().toISOString(),
         },
       ];
 
-      for (const taskRecord of defaultTasks) {
-        await db
-          .insertInto('task')
-          .values({
-            id: taskRecord.id,
-            title: taskRecord.title,
-            description: taskRecord.description,
-            completed: taskRecord.completed ? 1 : 0,
-            userId: taskRecord.userId,
-            createdAt: taskRecord.createdAt,
-          })
-          .execute();
-      }
+      // Single optimized batch insert
+      await db
+        .insertInto('task')
+        .values(
+          defaultTasks.map((taskItem) => ({
+            id: taskItem.id,
+            title: taskItem.title,
+            description: taskItem.description,
+            completed: taskItem.completed ? 1 : 0,
+            userId: taskItem.userId!,
+            createdAt: taskItem.createdAt,
+          }))
+        )
+        .execute();
 
       userTasks = defaultTasks;
     }
 
-    res.json(userTasks);
+    response.json(userTasks);
   } catch (caughtError: any) {
-    res.status(500).json({ message: 'Failed to fetch tasks', error: caughtError.message });
+    response.status(500).json({ message: 'Failed to fetch tasks', error: caughtError.message });
   }
 });
 
 // GET /api/tasks/:id - Read one task
-app.get('/api/tasks/:id', async (req, res) => {
-  const session = await getAuthSession(req);
-  if (!session?.user) {
-    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-
+app.get('/api/tasks/:id', requireAuth, async (request: AuthenticatedRequest, response: Response) => {
   try {
-    const row = await db.selectFrom('task').selectAll().where('id', '=', req.params.id).executeTakeFirst();
+    const row = await db.selectFrom('task').selectAll().where('id', '=', request.params.id).executeTakeFirst();
     if (!row) {
-      return res.status(404).json({ message: 'Task not found' });
+      return response.status(404).json({ message: 'Task not found' });
     }
 
     const task = mapRowToTask(row);
-    const userRole = (session.user as any).role;
-    if (task.userId !== session.user.id && userRole !== UserRole.Admin) {
-      return res.status(403).json({ message: 'Forbidden' });
+    const userRole = (request.userSession!.user as { role?: string }).role;
+    if (task.userId !== request.userSession!.user.id && userRole !== UserRole.Admin) {
+      return response.status(403).json({ message: 'Forbidden' });
     }
 
-    res.json(task);
+    response.json(task);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch task', error: error.message });
+    response.status(500).json({ message: 'Failed to fetch task', error: error.message });
   }
 });
 
 // POST /api/tasks - Create task
-app.post('/api/tasks', async (req, res) => {
-  const session = await getAuthSession(req);
-  if (!session?.user) {
-    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-
-  const { title, description } = req.body;
+app.post('/api/tasks', requireAuth, async (request: AuthenticatedRequest, response: Response) => {
+  const { title, description } = request.body;
   if (!title) {
-    return res.status(400).json({ message: 'Title is required' });
+    return response.status(400).json({ message: 'Title is required' });
   }
 
   const newTask: Task = {
-    id: Math.random().toString(36).substring(2, 9),
+    id: randomUUID(),
     title,
     description: description || '',
     completed: false,
-    userId: session.user.id,
+    userId: request.userSession!.user.id,
     createdAt: new Date().toISOString(),
   };
 
@@ -163,37 +186,32 @@ app.post('/api/tasks', async (req, res) => {
         title: newTask.title,
         description: newTask.description,
         completed: 0,
-        userId: newTask.userId,
+        userId: newTask.userId!,
         createdAt: newTask.createdAt,
       })
       .execute();
 
-    res.status(201).json(newTask);
+    response.status(201).json(newTask);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to create task', error: error.message });
+    response.status(500).json({ message: 'Failed to create task', error: error.message });
   }
 });
 
 // PUT /api/tasks/:id - Update task
-app.put('/api/tasks/:id', async (req, res) => {
-  const session = await getAuthSession(req);
-  if (!session?.user) {
-    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-
+app.put('/api/tasks/:id', requireAuth, async (request: AuthenticatedRequest, response: Response) => {
   try {
-    const existingRow = await db.selectFrom('task').selectAll().where('id', '=', req.params.id).executeTakeFirst();
+    const existingRow = await db.selectFrom('task').selectAll().where('id', '=', request.params.id).executeTakeFirst();
     if (!existingRow) {
-      return res.status(404).json({ message: 'Task not found' });
+      return response.status(404).json({ message: 'Task not found' });
     }
 
     const existingTask = mapRowToTask(existingRow);
-    const userRole = (session.user as any).role;
-    if (existingTask.userId !== session.user.id && userRole !== UserRole.Admin) {
-      return res.status(403).json({ message: 'Forbidden' });
+    const userRole = (request.userSession!.user as { role?: string }).role;
+    if (existingTask.userId !== request.userSession!.user.id && userRole !== UserRole.Admin) {
+      return response.status(403).json({ message: 'Forbidden' });
     }
 
-    const { title, description, completed } = req.body;
+    const { title, description, completed } = request.body;
     const updatedTask: Task = {
       ...existingTask,
       title: title !== undefined ? title : existingTask.title,
@@ -208,29 +226,58 @@ app.put('/api/tasks/:id', async (req, res) => {
         description: updatedTask.description,
         completed: updatedTask.completed ? 1 : 0,
       })
-      .where('id', '=', req.params.id)
+      .where('id', '=', request.params.id)
       .execute();
 
-    res.json(updatedTask);
+    response.json(updatedTask);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to update task', error: error.message });
+    response.status(500).json({ message: 'Failed to update task', error: error.message });
   }
 });
 
-// GET /api/admin/users - Read list of all registered users (Admin only)
-app.get('/api/admin/users', async (req, res) => {
-  const session = await getAuthSession(req);
-  if (!session?.user) {
-    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-
-  const userRole = (session.user as any).role;
-  if (userRole !== UserRole.Admin) {
-    return res.status(403).json({ message: 'Forbidden. Admin access required.' });
-  }
-
+// GET /api/admin/users - Read paginated & searchable list of users (Admin only)
+app.get('/api/admin/users', requireAdmin, async (request: AuthenticatedRequest, response: Response) => {
   try {
-    const rawUsers = await db.selectFrom('user').selectAll().execute();
+    const requestedPage = Math.max(1, parseInt(request.query.page as string, 10) || 1);
+    const requestedLimit = Math.max(1, Math.min(100, parseInt(request.query.limit as string, 10) || 10));
+    const searchQuery = typeof request.query.search === 'string' ? request.query.search.trim() : '';
+
+    let baseQuery = db.selectFrom('user');
+    let countQuery = db.selectFrom('user');
+
+    if (searchQuery) {
+      const searchPattern = `%${searchQuery}%`;
+      baseQuery = baseQuery.where((expressionBuilder) =>
+        expressionBuilder.or([
+          expressionBuilder('name', 'like', searchPattern),
+          expressionBuilder('email', 'like', searchPattern),
+          expressionBuilder('role', 'like', searchPattern),
+          expressionBuilder('id', 'like', searchPattern),
+        ])
+      );
+      countQuery = countQuery.where((expressionBuilder) =>
+        expressionBuilder.or([
+          expressionBuilder('name', 'like', searchPattern),
+          expressionBuilder('email', 'like', searchPattern),
+          expressionBuilder('role', 'like', searchPattern),
+          expressionBuilder('id', 'like', searchPattern),
+        ])
+      );
+    }
+
+    const totalCountResult = await countQuery
+      .select((expressionBuilder) => expressionBuilder.fn.count<number>('id').as('count'))
+      .executeTakeFirst();
+    const totalCount = Number(totalCountResult?.count || 0);
+    const totalPages = Math.max(1, Math.ceil(totalCount / requestedLimit));
+    const offset = (requestedPage - 1) * requestedLimit;
+
+    const rawUsers = await baseQuery
+      .selectAll()
+      .limit(requestedLimit)
+      .offset(offset)
+      .execute();
+
     const formattedUsers = rawUsers.map((userRow: any) => ({
       id: userRow.id,
       name: userRow.name || '',
@@ -242,36 +289,41 @@ app.get('/api/admin/users', async (req, res) => {
       updatedAt: typeof userRow.updatedAt === 'number' ? new Date(userRow.updatedAt).toISOString() : userRow.updatedAt,
     }));
 
-    res.json(formattedUsers);
+    const paginatedResponse: AdminUsersResponse = {
+      users: formattedUsers,
+      pagination: {
+        page: requestedPage,
+        limit: requestedLimit,
+        totalCount,
+        totalPages,
+      },
+    };
+
+    response.json(paginatedResponse);
   } catch (caughtError: any) {
-    res.status(500).json({ message: 'Failed to fetch users list', error: caughtError.message });
+    response.status(500).json({ message: 'Failed to fetch users list', error: caughtError.message });
   }
 });
 
 // DELETE /api/tasks/:id - Delete task
-app.delete('/api/tasks/:id', async (req, res) => {
-  const session = await getAuthSession(req);
-  if (!session?.user) {
-    return res.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-
+app.delete('/api/tasks/:id', requireAuth, async (request: AuthenticatedRequest, response: Response) => {
   try {
-    const existingRow = await db.selectFrom('task').selectAll().where('id', '=', req.params.id).executeTakeFirst();
+    const existingRow = await db.selectFrom('task').selectAll().where('id', '=', request.params.id).executeTakeFirst();
     if (!existingRow) {
-      return res.status(404).json({ message: 'Task not found' });
+      return response.status(404).json({ message: 'Task not found' });
     }
 
     const existingTask = mapRowToTask(existingRow);
-    const userRole = (session.user as any).role;
-    if (existingTask.userId !== session.user.id && userRole !== UserRole.Admin) {
-      return res.status(403).json({ message: 'Forbidden' });
+    const userRole = (request.userSession!.user as { role?: string }).role;
+    if (existingTask.userId !== request.userSession!.user.id && userRole !== UserRole.Admin) {
+      return response.status(403).json({ message: 'Forbidden' });
     }
 
-    await db.deleteFrom('task').where('id', '=', req.params.id).execute();
+    await db.deleteFrom('task').where('id', '=', request.params.id).execute();
 
-    res.json(existingTask);
+    response.json(existingTask);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete task', error: error.message });
+    response.status(500).json({ message: 'Failed to delete task', error: error.message });
   }
 });
 
@@ -282,4 +334,5 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 export { app };
+
 
