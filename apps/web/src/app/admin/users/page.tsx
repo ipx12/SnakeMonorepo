@@ -255,17 +255,17 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Users Table / List */}
-        <div className="border border-border/80 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+        <div className="w-full max-w-full min-w-0 border border-border/80 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-xl overflow-hidden">
+          <div className="w-full max-w-full overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[640px]">
               <thead className="bg-secondary/40 text-xs font-semibold text-muted-foreground uppercase border-b border-border/60">
                 <tr>
-                  <th className="py-3.5 px-4">User</th>
-                  <th className="py-3.5 px-4">Account ID</th>
-                  <th className="py-3.5 px-4">Role</th>
-                  <th className="py-3.5 px-4">Email Verified</th>
-                  <th className="py-3.5 px-4">Created At</th>
-                  <th className="py-3.5 px-4 text-right">Details</th>
+                  <th className="py-3 px-3 sm:px-4">User</th>
+                  <th className="py-3 px-3 sm:px-4">Account ID</th>
+                  <th className="py-3 px-3 sm:px-4">Role</th>
+                  <th className="py-3 px-3 sm:px-4">Email Verified</th>
+                  <th className="py-3 px-3 sm:px-4">Created At</th>
+                  <th className="py-3 px-3 sm:px-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -291,9 +291,9 @@ export default function AdminUsersPage() {
                     return (
                       <React.Fragment key={userItem.id}>
                         <tr className="hover:bg-secondary/30 transition-colors">
-                          <td className="py-3.5 px-4">
+                          <td className="py-3 px-3 sm:px-4">
                             <div className="flex items-center gap-3">
-                              <div className="size-9 rounded-full bg-linear-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
+                              <div className="size-8 sm:size-9 rounded-full bg-linear-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
                                 {userItem.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex flex-col">
@@ -303,13 +303,13 @@ export default function AdminUsersPage() {
                             </div>
                           </td>
 
-                          <td className="py-3.5 px-4">
+                          <td className="py-3 px-3 sm:px-4">
                             <span className="font-mono text-xs text-purple-300 bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 select-all">
                               {userItem.id}
                             </span>
                           </td>
 
-                          <td className="py-3.5 px-4">
+                          <td className="py-3 px-3 sm:px-4">
                             {userItem.role === UserRole.Admin ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
                                 <Crown className="size-3 text-amber-400" /> Admin
@@ -321,7 +321,7 @@ export default function AdminUsersPage() {
                             )}
                           </td>
 
-                          <td className="py-3.5 px-4">
+                          <td className="py-3 px-3 sm:px-4">
                             {userItem.emailVerified ? (
                               <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
                                 <CheckCircle2 className="size-4" /> Yes
@@ -333,13 +333,13 @@ export default function AdminUsersPage() {
                             )}
                           </td>
 
-                          <td className="py-3.5 px-4 text-xs text-muted-foreground">
+                          <td className="py-3 px-3 sm:px-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="size-3.5 text-muted-foreground/70" /> {createdDate}
                             </span>
                           </td>
 
-                          <td className="py-3.5 px-4 text-right">
+                          <td className="py-3 px-3 sm:px-4 text-right">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -356,23 +356,23 @@ export default function AdminUsersPage() {
                         {/* Expanded details view */}
                         {isExpanded && (
                           <tr className="bg-secondary/20 border-b border-border/60">
-                            <td colSpan={6} className="p-4 sm:p-6">
-                              <div className="space-y-4 bg-background/60 p-4 rounded-xl border border-border/70">
+                            <td colSpan={6} className="p-3 sm:p-6 max-w-full">
+                              <div className="space-y-4 bg-background/60 p-3 sm:p-4 rounded-xl border border-border/70 max-w-full overflow-hidden">
                                 <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-2">
                                   <Key className="size-4" /> User Object Data
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
                                     <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
-                                    <span className="font-mono text-foreground font-semibold select-all">{userItem.id}</span>
+                                    <span className="font-mono text-foreground font-semibold break-all select-all">{userItem.id}</span>
                                   </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
                                     <span className="text-muted-foreground block text-[11px]">Full Name:</span>
-                                    <span className="text-foreground font-semibold">{userItem.name}</span>
+                                    <span className="text-foreground font-semibold break-words">{userItem.name}</span>
                                   </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
                                     <span className="text-muted-foreground block text-[11px]">Email Address:</span>
-                                    <span className="text-foreground font-semibold">{userItem.email}</span>
+                                    <span className="text-foreground font-semibold break-all">{userItem.email}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
                                     <span className="text-muted-foreground block text-[11px]">Assigned Role:</span>
@@ -387,9 +387,9 @@ export default function AdminUsersPage() {
                                     <span className="text-foreground font-semibold">{userItem.updatedAt}</span>
                                   </div>
                                 </div>
-                                <div className="space-y-1 pt-1">
+                                <div className="space-y-1 pt-1 max-w-full">
                                   <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
-                                  <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto">
+                                  <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto max-w-full whitespace-pre">
                                     {JSON.stringify(userItem, null, 2)}
                                   </pre>
                                 </div>
@@ -407,24 +407,24 @@ export default function AdminUsersPage() {
 
           {/* Pagination Controls Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-border/60 bg-secondary/25">
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground text-center sm:text-left">
               Showing <span className="font-semibold text-foreground">{startRecordIndex}</span> to{' '}
               <span className="font-semibold text-foreground">{endRecordIndex}</span> of{' '}
               <span className="font-semibold text-foreground">{totalUsers}</span> accounts
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-center">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage <= 1 || isUsersLoading}
-                className="h-8 px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
+                className="h-8 px-2.5 sm:px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
               >
                 <ChevronLeft className="size-3.5 mr-1" /> Previous
               </Button>
 
-              <div className="flex items-center gap-1 px-2 text-xs font-semibold text-purple-300">
+              <div className="flex items-center gap-1 px-1 sm:px-2 text-xs font-semibold text-purple-300">
                 <span>Page</span>
                 <span className="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-200">
                   {currentPage}
@@ -437,7 +437,7 @@ export default function AdminUsersPage() {
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage >= paginationMeta.totalPages || isUsersLoading}
-                className="h-8 px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
+                className="h-8 px-2.5 sm:px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
               >
                 Next <ChevronRight className="size-3.5 ml-1" />
               </Button>

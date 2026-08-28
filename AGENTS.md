@@ -76,6 +76,12 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 - **Semantic Naming**: All variable names, parameters, functions, and state values MUST be self-descriptive and semantic (e.g. `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`). Avoid single-letter variables (like `u`, `q`, `e`, `i`, `val`) or non-descriptive names (like `data`, `res`, `items`, `loading`, `error`).
 
+### 8. Responsive Design & Mobile-First Standard (320px+)
+
+- **Baseline Viewport**: All UI components and layouts must support mobile viewports starting from a minimum width of **320px** without horizontal scroll (`scrollWidth <= innerWidth`), content clipping, or broken layouts.
+- **Layout Constraints**: Use fluid typography (`text-2xl sm:text-4xl`), responsive padding (`px-3 sm:px-6`), `min-w-0` on flex children, and isolated `overflow-x-auto` for wide components (tables/code blocks).
+- **Verification**: When introducing new pages or major UI sections, verify responsive integrity across 320px, 768px, and 1280px viewports using Playwright or browser checks.
+
 ## AGENTS.md Maintenance Policy
 
 1. **Automated Documentation**: Whenever new technologies, routes, endpoints, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
