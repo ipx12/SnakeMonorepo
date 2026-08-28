@@ -229,5 +229,23 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(response.body.users[0].id).toBe('admin-test-999');
     expect(response.body.pagination.totalCount).toBe(1);
   });
+
+  it('should return 400 Bad Request when updating task with empty title via Zod validation', async () => {
+    const createResponse = await request(app)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'Valid Task' });
+
+    const createdTaskId = createResponse.body.id;
+
+    const invalidUpdateResponse = await request(app)
+      .put(`/api/tasks/${createdTaskId}`)
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: '' });
+
+    expect(invalidUpdateResponse.status).toBe(400);
+    expect(invalidUpdateResponse.body.message).toContain('Title cannot be empty');
+  });
 });
+
 
