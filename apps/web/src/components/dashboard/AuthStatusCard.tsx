@@ -33,34 +33,34 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
   };
 
   return (
-    <div className="p-5 rounded-2xl bg-secondary/25 border border-border/80 backdrop-blur-lg flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+    <div className="p-4 sm:p-5 rounded-2xl bg-secondary/25 border border-border/80 backdrop-blur-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 shadow-lg">
       {!authLoading && user ? (
-        <div className="flex items-center gap-3">
-          <div className="size-11 rounded-full bg-linear-to-tr from-emerald-500 via-teal-500 to-indigo-500 flex items-center justify-center text-white font-bold text-base shadow-md">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="size-10 sm:size-11 shrink-0 rounded-full bg-linear-to-tr from-emerald-500 via-teal-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md">
             {user.name.charAt(0).toUpperCase()}
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-bold text-foreground text-sm">{user.name}</h3>
+              <h3 className="font-bold text-foreground text-sm truncate max-w-[150px] sm:max-w-none">{user.name}</h3>
               {getRoleBadge(user.role)}
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">
                 <ShieldCheck className="size-3" /> Logged In
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
           </div>
         </div>
       ) : !authLoading ? (
         <div className="flex items-center gap-3">
-          <div className="size-11 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground">
+          <div className="size-10 sm:size-11 shrink-0 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground">
             <UserIcon className="size-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-bold text-foreground text-sm">Guest Visitor</h3>
               {getRoleBadge('guest')}
             </div>
-            <p className="text-xs text-muted-foreground">Sign in or register to manage your personal task dashboard</p>
+            <p className="text-xs text-muted-foreground">Sign in or register to manage your personal tasks</p>
           </div>
         </div>
       ) : (
@@ -70,12 +70,12 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
         </div>
       )}
 
-      <div className="flex items-center gap-2.5 shrink-0">
+      <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
         {user?.role === UserRole.Admin && (
           <Link href="/admin/users">
             <Button
               size="sm"
-              className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold gap-1.5 cursor-pointer shadow-lg shadow-purple-500/25 transition-all hover:scale-105"
+              className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold gap-1.5 cursor-pointer shadow-lg shadow-purple-500/25 transition-all"
             >
               <Users className="size-3.5" /> User List
             </Button>
