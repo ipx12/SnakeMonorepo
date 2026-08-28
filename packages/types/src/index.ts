@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Enum of all user roles in the application.
  */
@@ -5,6 +7,51 @@ export enum UserRole {
   Admin = 'admin',
   User = 'user',
   Guest = 'guest',
+}
+
+// ---------------------------------------------------------------------------
+// Auth Schemas & Types
+// ---------------------------------------------------------------------------
+
+export const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
+});
+
+export type LoginFormData = z.infer<typeof loginSchema>;
+export type LoginPayload = LoginFormData;
+
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Full name is required')
+      .min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Please enter a valid email address'),
+    password: z
+      .string()
+      .min(1, 'Password is required')
+      .min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z
+      .string()
+      .min(1, 'Confirm password is required'),
+    role: z.nativeEnum(UserRole),
+  })
+  .refine((formData) => formData.password === formData.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+export type RegisterFormData = z.infer<typeof registerSchema>;
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  role?: UserRole;
 }
 
 export interface User {
@@ -26,6 +73,37 @@ export interface AdminUserDetail {
   updatedAt: string;
 }
 
+export interface AuthResponse {
+  token?: string;
+  user: User;
+}
+
+// ---------------------------------------------------------------------------
+// Task Schemas & Types
+// ---------------------------------------------------------------------------
+
+export const createTaskSchema = z.object({
+  title: z
+    .string({ error: 'Title is required' })
+    .min(1, 'Title is required')
+    .trim(),
+  description: z.string().optional().default(''),
+});
+
+export type CreateTaskPayload = z.infer<typeof createTaskSchema>;
+
+export const updateTaskSchema = z.object({
+  title: z.string().min(1, 'Title cannot be empty').trim().optional(),
+  description: z.string().optional(),
+  completed: z.boolean().optional(),
+});
+
+export type UpdateTaskPayload = z.infer<typeof updateTaskSchema>;
+
+export const taskIdParamSchema = z.object({
+  id: z.string().min(1, 'Task ID is required'),
+});
+
 export interface Task {
   id: string;
   title: string;
@@ -38,33 +116,17 @@ export interface Task {
 // Backward compatibility alias for Item
 export type Item = Task;
 
-export interface AuthResponse {
-  token?: string;
-  user: User;
-}
+// ---------------------------------------------------------------------------
+// Pagination & Admin Query Schemas
+// ---------------------------------------------------------------------------
 
-export interface RegisterPayload {
-  name: string;
-  email: string;
-  password: string;
-  role?: UserRole;
-}
+export const adminUsersQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  search: z.string().optional().default(''),
+});
 
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-export interface CreateTaskPayload {
-  title: string;
-  description?: string;
-}
-
-export interface UpdateTaskPayload {
-  title?: string;
-  description?: string;
-  completed?: boolean;
-}
+export type AdminUsersQueryParams = z.infer<typeof adminUsersQuerySchema>;
 
 export interface PaginationMeta {
   page: number;
@@ -76,10 +138,4 @@ export interface PaginationMeta {
 export interface AdminUsersResponse {
   users: AdminUserDetail[];
   pagination: PaginationMeta;
-}
-
-export interface AdminUsersQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
 }

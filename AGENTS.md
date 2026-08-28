@@ -28,17 +28,23 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Role-Based Access Control (RBAC)**: User roles defined in [`src/lib/roles.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/roles.ts) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`).
 - **Admin Dashboard**: Route `/admin/users` for administrators to view, search, and manage user accounts and session details.
 
-### 3. Forms & Validation
+### 3. Forms & Shared Validation Layer (End-to-End Zod)
 
 - **Form State Management**: **React Hook Form** (`react-hook-form`).
 - **Schema Validation**: **Zod** (`zod`).
-- **Schema Resolver**: `@hookform/resolvers/zod` (`zodResolver`).
+- **Shared Validation Schemas**: Centralized in `@snake/types` (`loginSchema`, `registerSchema`, `createTaskSchema`, `updateTaskSchema`, `taskIdParamSchema`, `adminUsersQuerySchema`).
+- **Backend Request Validation**: Express middleware (`validateRequestBody`, `validateRequestQuery`, `validateRequestParams`) leveraging shared Zod schemas.
+- **Frontend Schema Resolver**: `@hookform/resolvers/zod` (`zodResolver`).
 
 ### 4. Monorepo Architecture, Database & Optimization
 
 - **Frontend (`apps/web`)**: Next.js App Router on Port 3000 with Optimistic UI updates and Debounced Search.
-- **Backend (`apps/api`)**: Express server on Port 3001 with Reusable Auth Middlewares (`requireAuth`, `requireAdmin`).
-- **Shared Types (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces, enums (`UserRole`), API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
+- **Backend (`apps/api`)**: Layered Express server on Port 3001:
+  - **Routes (`src/routes/`)**: Route definitions and middleware binding (`task.routes.ts`, `admin.routes.ts`).
+  - **Controllers (`src/controllers/`)**: HTTP request/response handlers (`task.controller.ts`, `admin.controller.ts`).
+  - **Services (`src/services/`)**: Business logic and database operations (`task.service.ts`, `admin.service.ts`).
+  - **Middlewares (`src/middlewares/`)**: Reusable auth and validation handlers (`auth.middleware.ts`, `validate.middleware.ts`).
+- **Shared Types & Schemas (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces, enums (`UserRole`), Zod schemas, API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
 - **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`).
 - **Database Schema & Indices**:
   - `user`: User account details (`id`, `name`, `email`, `role`, `createdAt`, `updatedAt`).
@@ -49,19 +55,24 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 ### 5. Testing Infrastructure & Strategy
 
 - **Test Runner**: **Vitest** for both `apps/web` and `apps/api`.
-- **API Testing**: **Supertest** for testing Express endpoints in `apps/api` without running network ports.
+- **API Integration Testing**: **Supertest** for testing Express endpoints in `apps/api` without running network ports (`items.test.ts`).
+- **Service Layer Unit Testing**: Direct database and business logic testing in `apps/api/src/__tests__/services.test.ts`.
+- **Zod Schema Unit Testing**: Validation edge cases testing in `apps/web/src/__tests__/schemas.test.ts`.
 - **UI Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`).
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 43 unit & integration tests across workspaces.
 
 ### 6. Directory Structure Conventions
 
 - `apps/web/src/app/`: Next.js pages, layouts, and routes (`/`, `/login`, `/register`, `/admin/users`).
 - `apps/web/src/components/`: Visual UI components (`components/ui` for primitives, `components/dashboard` for feature widgets).
 - `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), authentication client (`auth-client.ts`), and helper utilities.
-- `apps/api/src/`: Express backend code, database connections, and routes.
-- `packages/types/`: Shared TypeScript models and interfaces (`@snake/types`).
+- `apps/api/src/controllers/`: Express route controllers.
+- `apps/api/src/services/`: Database and business logic operations.
+- `apps/api/src/routes/`: Express modular route definitions.
+- `apps/api/src/middlewares/`: Express authentication and validation middlewares.
+- `packages/types/`: Shared TypeScript models, interfaces, and Zod schemas (`@snake/types`).
 
-### 6. Code Naming Conventions
+### 7. Code Naming Conventions
 
 - **Semantic Naming**: All variable names, parameters, functions, and state values MUST be self-descriptive and semantic (e.g. `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`). Avoid single-letter variables (like `u`, `q`, `e`, `i`, `val`) or non-descriptive names (like `data`, `res`, `items`, `loading`, `error`).
 
