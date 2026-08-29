@@ -16,8 +16,9 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 ### 1. UI Library & Styling
 
-- **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives & Tailwind CSS v4 located in `src/components/ui/`).
+- **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives, Sonner & Tailwind CSS v4 located in `src/components/ui/`).
 - **Design Aesthetic**: Premium dark mode, glassmorphism, subtle micro-animations, and vibrant gradients.
+- **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, and action buttons.
 
 ### 2. Authentication & Authorization (RBAC)
 

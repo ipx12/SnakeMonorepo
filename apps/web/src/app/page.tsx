@@ -9,6 +9,7 @@ import { AuthStatusCard } from '@/components/dashboard/AuthStatusCard';
 import { CreateTaskForm } from '@/components/dashboard/CreateTaskForm';
 import { TaskList } from '@/components/dashboard/TaskList';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/sonner';
 import { LogIn, UserPlus, Lock } from 'lucide-react';
 
 export default function Home() {
@@ -30,7 +31,9 @@ export default function Home() {
       setTaskList(fetchedTasks);
       setErrorMessage('');
     } catch (caughtError: unknown) {
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
     } finally {
       setIsTasksLoading(false);
     }
@@ -66,7 +69,9 @@ export default function Home() {
       })
       .catch((caughtError) => {
         if (!isCancelled) {
-          setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+          const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
+          setErrorMessage(formattedErrorMessage);
+          toast.error(formattedErrorMessage);
           setIsTasksLoading(false);
         }
       });
@@ -85,8 +90,11 @@ export default function Home() {
       setTaskList((previousTasks) => [...previousTasks, newlyCreatedTask]);
       setNewTaskTitle('');
       setNewTaskDescription('');
+      toast.success('Task created successfully');
     } catch (caughtError: unknown) {
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
     }
   };
 
@@ -106,10 +114,13 @@ export default function Home() {
       setTaskList((currentTasks) =>
         currentTasks.map((currentTask) => (currentTask.id === targetTask.id ? updatedTask : currentTask))
       );
+      toast.success(newCompletedStatus ? 'Task marked as completed' : 'Task marked as pending');
     } catch (caughtError: unknown) {
       // Rollback to previous state on failure
       setTaskList(previousTaskList);
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to update task');
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to update task';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
     }
   };
 
@@ -132,8 +143,11 @@ export default function Home() {
         previousTasks.map((currentTask) => (currentTask.id === editingTask.id ? updatedTask : currentTask))
       );
       setEditingTask(null);
+      toast.success('Task updated successfully');
     } catch (caughtError: unknown) {
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Something went wrong');
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
     }
   };
 
@@ -145,10 +159,13 @@ export default function Home() {
 
     try {
       await deleteItem(taskId);
+      toast.success('Task deleted');
     } catch (caughtError: unknown) {
       // Rollback to previous state on failure
       setTaskList(previousTaskList);
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to delete task');
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to delete task';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
     }
   };
 

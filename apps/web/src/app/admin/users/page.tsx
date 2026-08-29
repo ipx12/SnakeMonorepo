@@ -7,6 +7,7 @@ import { getAdminUsers, type AdminUserDetail, type PaginationMeta } from '@/lib/
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/sonner';
 import {
   Users,
   ShieldAlert,
@@ -24,6 +25,7 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
+  Copy,
 } from 'lucide-react';
 
 export default function AdminUsersPage() {
@@ -55,6 +57,15 @@ export default function AdminUsersPage() {
     };
   }, [searchQuery]);
 
+  const handleCopyToClipboard = async (textToCopy: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
   const fetchUsers = async (targetPage: number = currentPage, targetLimit: number = pageSize, targetSearch: string = debouncedSearchQuery) => {
     try {
       setIsUsersLoading(true);
@@ -67,7 +78,9 @@ export default function AdminUsersPage() {
       setUsersList(apiResponse.users);
       setPaginationMeta(apiResponse.pagination);
     } catch (caughtError: unknown) {
-      setErrorMessage(caughtError instanceof Error ? caughtError.message : 'Failed to load the user list');
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to load the user list';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
     } finally {
       setIsUsersLoading(false);
     }
@@ -304,9 +317,15 @@ export default function AdminUsersPage() {
                           </td>
 
                           <td className="py-3 px-3 sm:px-4">
-                            <span className="font-mono text-xs text-purple-300 bg-purple-500/10 px-2 py-1 rounded border border-purple-500/20 select-all">
-                              {userItem.id}
-                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
+                              title="Click to copy User ID"
+                              className="font-mono text-xs text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-1 rounded border border-purple-500/20 inline-flex items-center gap-1.5 transition-colors cursor-pointer group/copy"
+                            >
+                              <span>{userItem.id}</span>
+                              <Copy className="size-3 opacity-60 group-hover/copy:opacity-100 transition-opacity" />
+                            </button>
                           </td>
 
                           <td className="py-3 px-3 sm:px-4">
@@ -363,7 +382,16 @@ export default function AdminUsersPage() {
                                 </h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
-                                    <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
+                                        className="text-[10px] text-purple-300 hover:underline flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Copy className="size-2.5" /> Copy
+                                      </button>
+                                    </div>
                                     <span className="font-mono text-foreground font-semibold break-all select-all">{userItem.id}</span>
                                   </div>
                                   <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
@@ -388,7 +416,17 @@ export default function AdminUsersPage() {
                                   </div>
                                 </div>
                                 <div className="space-y-1 pt-1 max-w-full">
-                                  <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleCopyToClipboard(JSON.stringify(userItem, null, 2), 'User JSON')}
+                                      className="h-6 text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1 px-2 cursor-pointer"
+                                    >
+                                      <Copy className="size-3" /> Copy JSON
+                                    </Button>
+                                  </div>
                                   <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto max-w-full whitespace-pre">
                                     {JSON.stringify(userItem, null, 2)}
                                   </pre>
