@@ -86,20 +86,18 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(response.body.message).toContain('Authentication required');
   });
 
-  it('should seed and return default tasks for authenticated GET /api/tasks in database', async () => {
+  it('should return an empty array for authenticated GET /api/tasks in database when no tasks exist', async () => {
     const response = await request(app)
       .get('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token');
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body.length).toBeGreaterThan(0);
-    expect(response.body[0]).toHaveProperty('title');
-    expect(response.body[0].userId).toBe('user-test-123');
+    expect(response.body.length).toBe(0);
 
-    // Verify default tasks were written to SQLite DB
+    // Verify tasks are empty in SQLite DB
     const dbRows = await db.selectFrom('task').selectAll().where('userId', '=', 'user-test-123').execute();
-    expect(dbRows.length).toBe(response.body.length);
+    expect(dbRows.length).toBe(0);
   });
 
   it('should create a new task in SQLite via POST /api/tasks and persist it', async () => {

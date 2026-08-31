@@ -56,5 +56,5 @@ The backend follows a strict **Layered Architecture** adhering to the **Single R
 
 * **Next.js App Router**: Server and Client Components optimized for responsiveness and rendering performance.
 * **Watermelon UI Design System**: Tailored UI primitives built on Radix UI and Tailwind CSS v4.
-* **Authentication**: `AuthContext` coupled with Better Auth browser client (`authClient`).
+* **Authentication**: Native Better Auth hooks (`useSession`, `signIn`, `signUp`) powered by the browser client (`authClient`).
 * **Forms & Validation**: `react-hook-form` paired with `@hookform/resolvers/zod` consuming schemas directly from `@snake/types`.

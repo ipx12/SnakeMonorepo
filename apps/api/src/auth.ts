@@ -1,8 +1,9 @@
 import { betterAuth } from 'better-auth';
 import { Kysely, sql } from 'kysely';
 import { LibsqlDialect } from '@libsql/kysely-libsql';
+import { DatabaseSchema } from '@snake/types';
 
-export const db = new Kysely<any>({
+export const db = new Kysely<DatabaseSchema>({
   dialect: new LibsqlDialect({
     url: 'file:sqlite.db',
   }),
@@ -34,6 +35,10 @@ export const auth = betterAuth({
 // Auto-initialize required Better Auth tables and seed demo user in SQLite
 export async function initDb() {
   try {
+    // Enable WAL mode for better concurrency and prevent SQLITE_BUSY
+    await sql`PRAGMA journal_mode = WAL;`.execute(db);
+    await sql`PRAGMA busy_timeout = 5000;`.execute(db);
+
     await sql`
       CREATE TABLE IF NOT EXISTS user (
         id TEXT PRIMARY KEY,
@@ -141,5 +146,3 @@ export async function initDb() {
     console.error('[Better Auth] Failed to initialize database schema or seed demo user:', err);
   }
 }
-
-initDb();

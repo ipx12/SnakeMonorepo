@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/AuthContext';
-import { getItems, createItem, updateItem, deleteItem, type Item } from '@/lib/api';
+import { useSession } from '@/lib/auth-client';
+import { getTasks, createTask, updateTask, deleteTask, type Task } from '@/lib/api';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AuthStatusCard } from '@/components/dashboard/AuthStatusCard';
 import { CreateTaskForm } from '@/components/dashboard/CreateTaskForm';
@@ -13,12 +13,13 @@ import { toast } from '@/components/ui/sonner';
 import { LogIn, UserPlus, Lock } from 'lucide-react';
 
 export default function Home() {
-  const { user, loading: isAuthLoading } = useAuth();
-  const [taskList, setTaskList] = useState<Item[]>([]);
+  const { data: session, isPending: isAuthLoading } = useSession();
+  const user = session?.user as any;
+  const [taskList, setTaskList] = useState<Task[]>([]);
   const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [editingTask, setEditingTask] = useState<Item | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState('');
   const [editingTaskDescription, setEditingTaskDescription] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -27,7 +28,7 @@ export default function Home() {
     if (!user) return;
     try {
       setIsTasksLoading(true);
-      const fetchedTasks = await getItems();
+      const fetchedTasks = await getTasks();
       setTaskList(fetchedTasks);
       setErrorMessage('');
     } catch (caughtError: unknown) {
@@ -59,7 +60,7 @@ export default function Home() {
       }
     });
 
-    getItems()
+    getTasks()
       .then((fetchedTasks) => {
         if (!isCancelled) {
           setTaskList(fetchedTasks);
@@ -86,7 +87,7 @@ export default function Home() {
     if (!newTaskTitle.trim()) return;
 
     try {
-      const newlyCreatedTask = await createItem(newTaskTitle, newTaskDescription);
+      const newlyCreatedTask = await createTask(newTaskTitle, newTaskDescription);
       setTaskList((previousTasks) => [...previousTasks, newlyCreatedTask]);
       setNewTaskTitle('');
       setNewTaskDescription('');
@@ -98,7 +99,7 @@ export default function Home() {
     }
   };
 
-  const handleToggleTaskCompletion = async (targetTask: Item) => {
+  const handleToggleTaskCompletion = async (targetTask: Task) => {
     const previousTaskList = [...taskList];
     const newCompletedStatus = !targetTask.completed;
 
@@ -110,7 +111,7 @@ export default function Home() {
     );
 
     try {
-      const updatedTask = await updateItem(targetTask.id, { completed: newCompletedStatus });
+      const updatedTask = await updateTask(targetTask.id, { completed: newCompletedStatus });
       setTaskList((currentTasks) =>
         currentTasks.map((currentTask) => (currentTask.id === targetTask.id ? updatedTask : currentTask))
       );
@@ -124,7 +125,7 @@ export default function Home() {
     }
   };
 
-  const handleStartTaskEdit = (targetTask: Item) => {
+  const handleStartTaskEdit = (targetTask: Task) => {
     setEditingTask(targetTask);
     setEditingTaskTitle(targetTask.title);
     setEditingTaskDescription(targetTask.description);
@@ -135,7 +136,7 @@ export default function Home() {
     if (!editingTask || !editingTaskTitle.trim()) return;
 
     try {
-      const updatedTask = await updateItem(editingTask.id, {
+      const updatedTask = await updateTask(editingTask.id, {
         title: editingTaskTitle,
         description: editingTaskDescription,
       });
@@ -158,7 +159,7 @@ export default function Home() {
     setTaskList((currentTasks) => currentTasks.filter((currentTask) => currentTask.id !== taskId));
 
     try {
-      await deleteItem(taskId);
+      await deleteTask(taskId);
       toast.success('Task deleted');
     } catch (caughtError: unknown) {
       // Rollback to previous state on failure

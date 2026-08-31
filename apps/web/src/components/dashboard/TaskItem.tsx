@@ -3,17 +3,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Edit2, Trash2 } from 'lucide-react';
-import type { Item } from '@/lib/api';
+import type { Task } from '@/lib/api';
 
 interface TaskItemProps {
-  item: Item;
+  item: Task;
   isEditing: boolean;
   editTitle: string;
   editDescription: string;
   setEditTitle: (newTitle: string) => void;
   setEditDescription: (newDescription: string) => void;
-  onToggle: (task: Item) => void;
-  onStartEdit: (task: Item) => void;
+  onToggle: (task: Task) => void;
+  onStartEdit: (task: Task) => void;
   onSaveEdit: (event: React.FormEvent) => void;
   onCancelEdit: () => void;
   onDelete: (taskId: string) => void;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/AuthContext';
+import { useSession } from '@/lib/auth-client';
 import { getAdminUsers, type AdminUserDetail, type PaginationMeta } from '@/lib/api';
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,8 @@ import {
 } from 'lucide-react';
 
 export default function AdminUsersPage() {
-  const { user, loading: isAuthLoading } = useAuth();
+  const { data: session, isPending: isAuthLoading } = useSession();
+  const user = session?.user;
   const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
     page: 1,
@@ -89,7 +90,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     let isCancelled = false;
     if (isAuthLoading) return;
-    if (user?.role === UserRole.Admin) {
+    if ((user as any)?.role === UserRole.Admin) {
       queueMicrotask(() => {
         if (!isCancelled) {
           fetchUsers(currentPage, pageSize, debouncedSearchQuery);
@@ -134,7 +135,7 @@ export default function AdminUsersPage() {
     );
   }
 
-  if (!user || user.role !== UserRole.Admin) {
+  if (!user || (user as any).role !== UserRole.Admin) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md p-8 border border-destructive/30 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center space-y-5">

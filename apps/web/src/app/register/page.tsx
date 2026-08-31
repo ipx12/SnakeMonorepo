@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/AuthContext';
+import { signUp } from '@/lib/auth-client';
 import { registerSchema, RegisterFormData } from '@/lib/schemas/auth';
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { Lock, Mail, User as UserIcon, Eye, EyeOff, UserPlus, Sparkles, AlertCir
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register: registerAuth } = useAuth();
+
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,12 +47,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await registerAuth({
+      const { error } = await signUp.email({
         name: data.name,
         email: data.email,
         password: data.password,
         role: data.role,
-      });
+      } as any);
+      if (error) throw new Error(error.message || 'Failed to register. Please try again.');
+      
       setSuccessMsg('Account created successfully!');
       setIsRedirecting(true);
       router.push('/');

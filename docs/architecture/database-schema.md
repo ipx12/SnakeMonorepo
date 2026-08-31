@@ -1,6 +1,6 @@
 # 🗄️ Database & Schema Design
 
-The application utilizes **SQLite (`file:sqlite.db`)** paired with the type-safe **Kysely** query builder and the **LibSQL dialect (`@libsql/kysely-libsql`)**.
+The application utilizes **SQLite (`file:sqlite.db`)** paired with the type-safe **Kysely** query builder and the **LibSQL dialect (`@libsql/kysely-libsql`)**. It is configured with `WAL` journal mode and `busy_timeout` to prevent database locking during concurrent reads/writes.
 
 ---
 
@@ -55,5 +55,4 @@ Stores private tasks created by users.
 ---
 
 ## Query Optimizations
-* **Batch Inserts**: Initial default onboarding tasks are seeded using a single batch SQL insertion.
 * **Database-Level Pagination**: `/api/admin/users` calculates `LIMIT`, `OFFSET`, and `COUNT(id)` directly within SQLite.

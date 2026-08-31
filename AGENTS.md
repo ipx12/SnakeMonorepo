@@ -23,7 +23,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 ### 2. Authentication & Authorization (RBAC)
 
 - **Auth Provider**: **Better Auth** (`better-auth`).
-- **Frontend Client**: `authClient` from [`src/lib/auth-client.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-client.ts) consumed via [`AuthContext`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/AuthContext.tsx).
+- **Frontend Client**: `authClient` from [`src/lib/auth-client.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-client.ts) consumed via native hooks (`useSession`, `signIn`, `signUp`).
 - **Backend Auth Endpoint**: Express API mounted at `http://localhost:3001/api/auth/*`.
 - **Default Demo Account**: `demo@watermelon.ui` / `password123`.
 - **Role-Based Access Control (RBAC)**: User roles defined in [`src/lib/roles.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/roles.ts) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`).
@@ -45,13 +45,13 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
   - **Controllers (`src/controllers/`)**: HTTP request/response handlers (`task.controller.ts`, `admin.controller.ts`).
   - **Services (`src/services/`)**: Business logic and database operations (`task.service.ts`, `admin.service.ts`).
   - **Middlewares (`src/middlewares/`)**: Reusable auth and validation handlers (`auth.middleware.ts`, `validate.middleware.ts`).
-- **Shared Types & Schemas (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces, enums (`UserRole`), Zod schemas, API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
-- **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`).
+- **Shared Types & Schemas (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces (`DatabaseSchema`), enums (`UserRole`), Zod schemas, API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
+- **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`), configured with `WAL` journal mode and `busy_timeout` to prevent locking.
 - **Database Schema & Indices**:
   - `user`: User account details (`id`, `name`, `email`, `role`, `createdAt`, `updatedAt`).
   - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`). Index: `idx_session_userId` on `session(userId)`.
   - `task`: User task dashboard items (`id`, `title`, `description`, `completed`, `userId`, `createdAt`). Index: `idx_task_userId` on `task(userId)`.
-- **Query Optimization**: Batch inserts for initial default user tasks, secure `crypto.randomUUID()` identifier generation, and SQL-level server-side pagination & filtering for `/api/admin/users`.
+- **Query Optimization**: Secure `crypto.randomUUID()` identifier generation, and SQL-level server-side pagination & filtering for `/api/admin/users`.
 
 ### 5. Testing Infrastructure & Strategy
 
