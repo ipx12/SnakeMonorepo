@@ -13,47 +13,7 @@ export const mapRowToTask = (databaseRow: any): Task => ({
 
 export const getTasksForUser = async (userId: string, userRole: string = UserRole.User): Promise<Task[]> => {
   const taskRows = await db.selectFrom('task').selectAll().where('userId', '=', userId).execute();
-  let userTasks = taskRows.map(mapRowToTask);
-
-  // If user has no tasks yet, seed initial default tasks in a single batch insert
-  if (userTasks.length === 0) {
-    const defaultTasks: Task[] = [
-      {
-        id: randomUUID(),
-        title: 'Welcome to your Task Dashboard',
-        description: 'This is your private task list. Add, edit or complete your items.',
-        completed: false,
-        userId: userId,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: randomUUID(),
-        title: 'Explore User Roles',
-        description: `Your account role is '${userRole}'.`,
-        completed: true,
-        userId: userId,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    await db
-      .insertInto('task')
-      .values(
-        defaultTasks.map((taskItem) => ({
-          id: taskItem.id,
-          title: taskItem.title,
-          description: taskItem.description,
-          completed: taskItem.completed ? 1 : 0,
-          userId: taskItem.userId!,
-          createdAt: taskItem.createdAt,
-        }))
-      )
-      .execute();
-
-    userTasks = defaultTasks;
-  }
-
-  return userTasks;
+  return taskRows.map(mapRowToTask);
 };
 
 export const getTaskById = async (taskId: string): Promise<Task | null> => {

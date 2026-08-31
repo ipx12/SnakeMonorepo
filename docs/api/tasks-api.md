@@ -8,7 +8,7 @@ All endpoints require authentication (`requireAuth`).
 
 ## 1. List User Tasks
 * **Method**: `GET /api/tasks`
-* **Description**: Returns all tasks belonging to the currently authenticated user. If the user has no tasks, 2 default onboarding tasks are automatically seeded.
+* **Description**: Returns all tasks belonging to the currently authenticated user.
 * **Response (`200 OK`)**:
 ```json
 [

@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { toNodeHandler } from 'better-auth/node';
-import { auth } from './auth';
+import { auth, initDb } from './auth';
 import { taskRouter } from './routes/task.routes';
 import { adminRouter } from './routes/admin.routes';
 
@@ -15,13 +15,7 @@ const PORT = process.env.PORT || 3001;
 // CORS configuration
 app.use(
   cors({
-    origin: (originHeader, allowCallback) => {
-      if (!originHeader || originHeader.startsWith('http://localhost') || originHeader.startsWith('http://127.0.0.1')) {
-        allowCallback(null, true);
-      } else {
-        allowCallback(null, true);
-      }
-    },
+    origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
   })
 );
@@ -46,8 +40,10 @@ app.use((unhandledError: any, _httpRequest: Request, httpResponse: Response, _ne
 });
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  initDb().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
   });
 }
 

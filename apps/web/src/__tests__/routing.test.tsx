@@ -11,13 +11,14 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/lib/AuthContext', () => ({
-  useAuth: () => ({
-    user: null,
-    loading: false,
-    logout: vi.fn(),
+vi.mock('@/lib/auth-client', () => ({
+  useSession: () => ({
+    data: null,
+    isPending: false,
   }),
-  AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  signIn: { email: vi.fn() },
+  signUp: { email: vi.fn() },
+  signOut: vi.fn(),
 }));
 
 import HomePage from '../app/page';

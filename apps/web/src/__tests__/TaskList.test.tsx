@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TaskList } from '../components/dashboard/TaskList';
-import type { Item } from '../lib/api';
+import type { Task } from '../lib/api';
 
 describe('TaskList Component', () => {
-  const mockTaskList: Item[] = [
+  const mockTaskList: Task[] = [
     {
       id: 'task-1',
       title: 'Setup Vitest Testing',

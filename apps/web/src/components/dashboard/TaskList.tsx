@@ -1,19 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import type { Item } from '@/lib/api';
+import type { Task } from '@/lib/api';
 import { TaskItem } from './TaskItem';
 
 interface TaskListProps {
-  items: Item[];
+  items: Task[];
   loading: boolean;
-  editingItem: Item | null;
+  editingItem: Task | null;
   editTitle: string;
   editDescription: string;
   setEditTitle: (newTitle: string) => void;
   setEditDescription: (newDescription: string) => void;
   onRefresh: () => void;
-  onToggle: (targetTask: Item) => void;
-  onStartEdit: (targetTask: Item) => void;
+  onToggle: (targetTask: Task) => void;
+  onStartEdit: (targetTask: Task) => void;
   onSaveEdit: (event: React.FormEvent) => void;
   onCancelEdit: () => void;
   onDelete: (taskId: string) => void;

@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/lib/AuthContext';
+import { useSession, signOut } from '@/lib/auth-client';
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
 
 export function Navbar() {
-  const { user, loading: isAuthLoading, logout } = useAuth();
+  const { data: session, isPending: isAuthLoading } = useSession();
+  const user = session?.user;
+  const logout = async () => await signOut();
   const pathname = usePathname();
 
   return (
@@ -43,7 +45,7 @@ export function Navbar() {
             <span className="hidden xs:inline">Dashboard</span>
           </Link>
 
-          {user?.role === UserRole.Admin && (
+          {(user as any)?.role === UserRole.Admin && (
             <Link
               href="/admin/users"
               className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${

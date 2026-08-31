@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/AuthContext';
+import { signIn } from '@/lib/auth-client';
 import { loginSchema, LoginFormData } from '@/lib/schemas/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import { Lock, Mail, Eye, EyeOff, LogIn, Sparkles, AlertCircle, CheckCircle2 } f
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,9 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login({ email: data.email, password: data.password });
+      const { error } = await signIn.email({ email: data.email, password: data.password });
+      if (error) throw new Error(error.message || 'Invalid credentials. Please try again.');
+      
       setSuccessMsg('Authorization successful!');
       setIsRedirecting(true);
       router.push('/');

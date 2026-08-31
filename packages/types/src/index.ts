@@ -139,3 +139,71 @@ export interface AdminUsersResponse {
   users: AdminUserDetail[];
   pagination: PaginationMeta;
 }
+
+// ---------------------------------------------------------------------------
+// Database Schema Types (Kysely)
+// ---------------------------------------------------------------------------
+
+export interface UserTable {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: number;
+  image: string | null;
+  role: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SessionTable {
+  id: string;
+  expiresAt: number;
+  token: string;
+  createdAt: number;
+  updatedAt: number;
+  ipAddress: string | null;
+  userAgent: string | null;
+  userId: string;
+}
+
+export interface AccountTable {
+  id: string;
+  accountId: string;
+  providerId: string;
+  userId: string;
+  accessToken: string | null;
+  refreshToken: string | null;
+  idToken: string | null;
+  accessTokenExpiresAt: number | null;
+  refreshTokenExpiresAt: number | null;
+  scope: string | null;
+  password: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface VerificationTable {
+  id: string;
+  identifier: string;
+  value: string;
+  expiresAt: number;
+  createdAt: number | null;
+  updatedAt: number | null;
+}
+
+export interface TaskTable {
+  id: string;
+  title: string;
+  description: string | null;
+  completed: number;
+  userId: string;
+  createdAt: string;
+}
+
+export interface DatabaseSchema {
+  user: UserTable;
+  session: SessionTable;
+  account: AccountTable;
+  verification: VerificationTable;
+  task: TaskTable;
+}

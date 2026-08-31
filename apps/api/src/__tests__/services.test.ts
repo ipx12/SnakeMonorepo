@@ -47,11 +47,9 @@ describe('Backend Services Unit Tests', () => {
   });
 
   describe('Task Service', () => {
-    it('should seed default tasks when a user has no tasks', async () => {
+    it('should return an empty array when a user has no tasks', async () => {
       const userTasksList = await taskService.getTasksForUser(mockUserId, UserRole.User);
-      expect(userTasksList.length).toBe(2);
-      expect(userTasksList[0].userId).toBe(mockUserId);
-      expect(userTasksList[0].title).toBe('Welcome to your Task Dashboard');
+      expect(userTasksList.length).toBe(0);
     });
 
     it('should create and retrieve a task by ID', async () => {
@@ -123,6 +121,7 @@ describe('Backend Services Unit Tests', () => {
       const paginatedUsersResult = await adminService.getAdminUsersPaginated({
         page: 1,
         limit: 10,
+        search: '',
       });
 
       expect(paginatedUsersResult.users.length).toBe(2);
@@ -133,6 +132,8 @@ describe('Backend Services Unit Tests', () => {
 
     it('should filter users by search term across name and email', async () => {
       const searchResult = await adminService.getAdminUsersPaginated({
+        page: 1,
+        limit: 10,
         search: 'lead.admin',
       });
 
