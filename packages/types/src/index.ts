@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
 /**
- * Enum of all user roles in the application.
+ * User roles in the application.
  */
-export enum UserRole {
-  Admin = 'admin',
-  User = 'user',
-  Guest = 'guest',
-}
+export const UserRole = {
+  Admin: 'admin',
+  User: 'user',
+  Guest: 'guest',
+} as const;
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 // ---------------------------------------------------------------------------
 // Auth Schemas & Types
