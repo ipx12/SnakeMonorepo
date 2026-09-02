@@ -9,6 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/sonner';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   Users,
   ShieldAlert,
   ArrowLeft,
@@ -270,179 +278,177 @@ export default function AdminUsersPage() {
 
         {/* Users Table / List */}
         <div className="w-full max-w-full min-w-0 border border-border/80 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-xl overflow-hidden">
-          <div className="w-full max-w-full overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[640px]">
-              <thead className="bg-secondary/40 text-xs font-semibold text-muted-foreground uppercase border-b border-border/60">
-                <tr>
-                  <th className="py-3 px-3 sm:px-4">User</th>
-                  <th className="py-3 px-3 sm:px-4">Account ID</th>
-                  <th className="py-3 px-3 sm:px-4">Role</th>
-                  <th className="py-3 px-3 sm:px-4">Email Verified</th>
-                  <th className="py-3 px-3 sm:px-4">Created At</th>
-                  <th className="py-3 px-3 sm:px-4 text-right">Details</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {usersList.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
-                      {isUsersLoading ? 'Loading users...' : debouncedSearchQuery ? 'No users found matching your query' : 'No users found'}
-                    </td>
-                  </tr>
-                ) : (
-                  usersList.map((userItem) => {
-                    const isExpanded = expandedUserId === userItem.id;
-                    const createdDate = userItem.createdAt
-                      ? new Date(userItem.createdAt).toLocaleDateString('en-US', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : '—';
+          <Table className="min-w-[640px]">
+            <TableHeader className="bg-secondary/40">
+              <TableRow className="border-border/60 hover:bg-transparent">
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">User</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Account ID</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Role</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Email Verified</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Created At</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3 text-right">Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-border/50">
+              {usersList.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
+                    {isUsersLoading ? 'Loading users...' : debouncedSearchQuery ? 'No users found matching your query' : 'No users found'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                usersList.map((userItem) => {
+                  const isExpanded = expandedUserId === userItem.id;
+                  const createdDate = userItem.createdAt
+                    ? new Date(userItem.createdAt).toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '—';
 
-                    return (
-                      <React.Fragment key={userItem.id}>
-                        <tr className="hover:bg-secondary/30 transition-colors">
-                          <td className="py-3 px-3 sm:px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="size-8 sm:size-9 rounded-full bg-linear-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
-                                {userItem.name.charAt(0).toUpperCase()}
+                  return (
+                    <React.Fragment key={userItem.id}>
+                      <TableRow className="hover:bg-secondary/30 transition-colors border-border/50">
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="size-8 sm:size-9 rounded-full bg-linear-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
+                              {userItem.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground text-sm">{userItem.name}</span>
+                              <span className="text-xs text-muted-foreground">{userItem.email}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
+                            title="Click to copy User ID"
+                            className="font-mono text-xs text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-1 rounded border border-purple-500/20 inline-flex items-center gap-1.5 transition-colors cursor-pointer group/copy"
+                          >
+                            <span>{userItem.id}</span>
+                            <Copy className="size-3 opacity-60 group-hover/copy:opacity-100 transition-opacity" />
+                          </button>
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          {userItem.role === UserRole.Admin ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
+                              <Crown className="size-3 text-amber-400" /> Admin
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 uppercase tracking-wider">
+                              <UserCheck className="size-3 text-emerald-400" /> User
+                            </span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          {userItem.emailVerified ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                              <CheckCircle2 className="size-4" /> Yes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                              <XCircle className="size-4 text-muted-foreground/60" /> No
+                            </span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="py-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-3.5 text-muted-foreground/70" /> {createdDate}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="py-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedUserId(isExpanded ? null : userItem.id)}
+                            className="h-8 text-xs gap-1 text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 cursor-pointer"
+                          >
+                            <Info className="size-3.5" />
+                            <span>{isExpanded ? 'Hide' : 'Full Info'}</span>
+                            {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expanded details view */}
+                      {isExpanded && (
+                        <TableRow className="bg-secondary/20 border-b border-border/60 hover:bg-secondary/20">
+                          <TableCell colSpan={6} className="p-3 sm:p-6 max-w-full whitespace-normal">
+                            <div className="space-y-4 bg-background/60 p-3 sm:p-4 rounded-xl border border-border/70 max-w-full overflow-hidden">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                                <Key className="size-4" /> User Object Data
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
+                                      className="text-[10px] text-purple-300 hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Copy className="size-2.5" /> Copy
+                                    </button>
+                                  </div>
+                                  <span className="font-mono text-foreground font-semibold break-all select-all">{userItem.id}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
+                                  <span className="text-muted-foreground block text-[11px]">Full Name:</span>
+                                  <span className="text-foreground font-semibold break-words">{userItem.name}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
+                                  <span className="text-muted-foreground block text-[11px]">Email Address:</span>
+                                  <span className="text-foreground font-semibold break-all">{userItem.email}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <span className="text-muted-foreground block text-[11px]">Assigned Role:</span>
+                                  <span className="text-purple-300 font-semibold">{userItem.role}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
+                                  <span className="text-foreground font-semibold">{userItem.createdAt}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <span className="text-muted-foreground block text-[11px]">Last Updated:</span>
+                                  <span className="text-foreground font-semibold">{userItem.updatedAt}</span>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-foreground text-sm">{userItem.name}</span>
-                                <span className="text-xs text-muted-foreground">{userItem.email}</span>
+                              <div className="space-y-1 pt-1 max-w-full">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCopyToClipboard(JSON.stringify(userItem, null, 2), 'User JSON')}
+                                    className="h-6 text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1 px-2 cursor-pointer"
+                                  >
+                                    <Copy className="size-3" /> Copy JSON
+                                  </Button>
+                                </div>
+                                <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto max-w-full whitespace-pre">
+                                  {JSON.stringify(userItem, null, 2)}
+                                </pre>
                               </div>
                             </div>
-                          </td>
-
-                          <td className="py-3 px-3 sm:px-4">
-                            <button
-                              type="button"
-                              onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
-                              title="Click to copy User ID"
-                              className="font-mono text-xs text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-1 rounded border border-purple-500/20 inline-flex items-center gap-1.5 transition-colors cursor-pointer group/copy"
-                            >
-                              <span>{userItem.id}</span>
-                              <Copy className="size-3 opacity-60 group-hover/copy:opacity-100 transition-opacity" />
-                            </button>
-                          </td>
-
-                          <td className="py-3 px-3 sm:px-4">
-                            {userItem.role === UserRole.Admin ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
-                                <Crown className="size-3 text-amber-400" /> Admin
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 uppercase tracking-wider">
-                                <UserCheck className="size-3 text-emerald-400" /> User
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="py-3 px-3 sm:px-4">
-                            {userItem.emailVerified ? (
-                              <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                                <CheckCircle2 className="size-4" /> Yes
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
-                                <XCircle className="size-4 text-muted-foreground/60" /> No
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="py-3 px-3 sm:px-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="size-3.5 text-muted-foreground/70" /> {createdDate}
-                            </span>
-                          </td>
-
-                          <td className="py-3 px-3 sm:px-4 text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setExpandedUserId(isExpanded ? null : userItem.id)}
-                              className="h-8 text-xs gap-1 text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 cursor-pointer"
-                            >
-                              <Info className="size-3.5" />
-                              <span>{isExpanded ? 'Hide' : 'Full Info'}</span>
-                              {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                            </Button>
-                          </td>
-                        </tr>
-
-                        {/* Expanded details view */}
-                        {isExpanded && (
-                          <tr className="bg-secondary/20 border-b border-border/60">
-                            <td colSpan={6} className="p-3 sm:p-6 max-w-full">
-                              <div className="space-y-4 bg-background/60 p-3 sm:p-4 rounded-xl border border-border/70 max-w-full overflow-hidden">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-2">
-                                  <Key className="size-4" /> User Object Data
-                                </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
-                                        className="text-[10px] text-purple-300 hover:underline flex items-center gap-1 cursor-pointer"
-                                      >
-                                        <Copy className="size-2.5" /> Copy
-                                      </button>
-                                    </div>
-                                    <span className="font-mono text-foreground font-semibold break-all select-all">{userItem.id}</span>
-                                  </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
-                                    <span className="text-muted-foreground block text-[11px]">Full Name:</span>
-                                    <span className="text-foreground font-semibold break-words">{userItem.name}</span>
-                                  </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
-                                    <span className="text-muted-foreground block text-[11px]">Email Address:</span>
-                                    <span className="text-foreground font-semibold break-all">{userItem.email}</span>
-                                  </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Assigned Role:</span>
-                                    <span className="text-purple-300 font-semibold">{userItem.role}</span>
-                                  </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
-                                    <span className="text-foreground font-semibold">{userItem.createdAt}</span>
-                                  </div>
-                                  <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
-                                    <span className="text-muted-foreground block text-[11px]">Last Updated:</span>
-                                    <span className="text-foreground font-semibold">{userItem.updatedAt}</span>
-                                  </div>
-                                </div>
-                                <div className="space-y-1 pt-1 max-w-full">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleCopyToClipboard(JSON.stringify(userItem, null, 2), 'User JSON')}
-                                      className="h-6 text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1 px-2 cursor-pointer"
-                                    >
-                                      <Copy className="size-3" /> Copy JSON
-                                    </Button>
-                                  </div>
-                                  <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto max-w-full whitespace-pre">
-                                    {JSON.stringify(userItem, null, 2)}
-                                  </pre>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
 
           {/* Pagination Controls Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-border/60 bg-secondary/25">

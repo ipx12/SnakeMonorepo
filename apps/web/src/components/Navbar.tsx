@@ -35,27 +35,29 @@ export function Navbar() {
         <nav className="flex items-center gap-1.5 sm:gap-4 shrink-0">
           <Link
             href="/"
-            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
+            title="Dashboard"
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
               pathname === '/'
                 ? 'bg-secondary text-emerald-400'
                 : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
             }`}
           >
             <LayoutDashboard className="size-4" />
-            <span className="hidden xs:inline">Dashboard</span>
+            <span className="hidden sm:inline">Dashboard</span>
           </Link>
 
           {(user as any)?.role === UserRole.Admin && (
             <Link
               href="/admin/users"
-              className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
+              title="Users"
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors ${
                 pathname === '/admin/users'
                   ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
                   : 'text-muted-foreground hover:text-purple-300 hover:bg-purple-500/10'
               }`}
             >
               <Users className="size-4 text-purple-400" />
-              <span className="hidden xs:inline">Users</span>
+              <span className="hidden sm:inline">Users</span>
             </Link>
           )}
 
@@ -92,19 +94,21 @@ export function Navbar() {
                 <Button
                   variant={pathname === '/login' ? 'secondary' : 'ghost'}
                   size="sm"
+                  title="Login"
                   className="h-8 px-2 sm:px-3 text-xs sm:text-sm font-medium gap-1 sm:gap-1.5 cursor-pointer"
                 >
                   <LogIn className="size-3.5 sm:size-4 text-emerald-400" />
-                  <span>Login</span>
+                  <span className="hidden sm:inline">Login</span>
                 </Button>
               </Link>
               <Link href="/register">
                 <Button
                   size="sm"
+                  title="Register"
                   className="h-8 px-2.5 sm:px-3 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs sm:text-sm font-medium gap-1 sm:gap-1.5 cursor-pointer shadow-md shadow-emerald-500/10"
                 >
                   <UserPlus className="size-3.5 sm:size-4" />
-                  <span className="hidden xs:inline">Register</span>
+                  <span className="hidden sm:inline">Register</span>
                 </Button>
               </Link>
             </div>
