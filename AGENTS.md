@@ -16,7 +16,8 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 ### 1. UI Library & Styling
 
-- **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives, Sonner & Tailwind CSS v4 located in `src/components/ui/`).
+- **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives, Sonner & Tailwind CSS v4 located in `src/components/ui/` — including `Button`, `Input`, `Textarea`, `Checkbox`, `Sonner`, and `Table`).
+- **Table Primitive**: Component set in [`apps/web/src/components/ui/table.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/ui/table.tsx) (`Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption`) used across data displays like `/admin/users`.
 - **Design Aesthetic**: Premium dark mode, glassmorphism, subtle micro-animations, and vibrant gradients.
 - **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, and action buttons.
 
@@ -60,7 +61,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Service Layer Unit Testing**: Direct database and business logic testing in `apps/api/src/__tests__/services.test.ts`.
 - **Zod Schema Unit Testing**: Validation edge cases testing in `apps/web/src/__tests__/schemas.test.ts`.
 - **UI Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 43 unit & integration tests across workspaces.
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 47 unit & integration tests across workspaces (17 in `apps/api`, 30 in `apps/web`).
 
 ### 6. Directory Structure Conventions
 
@@ -80,6 +81,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 ### 8. Responsive Design & Mobile-First Standard (320px+)
 
 - **Baseline Viewport**: All UI components and layouts must support mobile viewports starting from a minimum width of **320px** without horizontal scroll (`scrollWidth <= innerWidth`), content clipping, or broken layouts.
+- **Tailwind Breakpoints Standard**: Always use standard Tailwind CSS v4 breakpoint modifiers (`sm:` 640px+, `md:` 768px+, `lg:` 1024px+, `xl:` 1280px+). Do NOT use non-standard modifiers (such as `xs:`).
 - **Layout Constraints**: Use fluid typography (`text-2xl sm:text-4xl`), responsive padding (`px-3 sm:px-6`), `min-w-0` on flex children, and isolated `overflow-x-auto` for wide components (tables/code blocks).
 - **Verification**: When introducing new pages or major UI sections, verify responsive integrity across 320px, 768px, and 1280px viewports using Playwright or browser checks.
 

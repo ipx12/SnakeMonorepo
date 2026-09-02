@@ -7,7 +7,7 @@
 | Command | Description |
 | :--- | :--- |
 | `npm run dev` | Launch frontend (`localhost:3000`) and backend (`localhost:3001`) concurrently via Turborepo |
-| `npm run test` | Run all 43 tests across workspaces (Vitest, Supertest, React Testing Library) |
+| `npm run test` | Run all 47 tests across workspaces (Vitest, Supertest, React Testing Library) |
 | `npm run build` | Compile TypeScript and build Next.js production bundle |
 | `npm run clean` | Clean all build artifacts (`.turbo`, `dist`, `.next`) |
 

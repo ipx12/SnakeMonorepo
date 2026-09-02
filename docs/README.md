@@ -30,7 +30,7 @@ npm install
 # 2. Start frontend (:3000) and backend (:3001) in development mode
 npm run dev
 
-# 3. Execute all monorepo test suites (43 tests)
+# 3. Execute all monorepo test suites (47 tests)
 npm run test
 
 # 4. Create production build
