@@ -1,7 +1,14 @@
+'use client';
+
+import { useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import type { Task } from '@/lib/api';
 import { TaskItem } from './TaskItem';
+
+gsap.registerPlugin(useGSAP);
 
 interface TaskListProps {
   items: Task[];
@@ -34,6 +41,71 @@ export function TaskList({
   onCancelEdit: onCancelTaskEdit,
   onDelete: onDeleteTask,
 }: TaskListProps) {
+  const taskListContainerRef = useRef<HTMLDivElement | null>(null);
+  const isInitialMountRef = useRef(true);
+  const previousLoadingStateRef = useRef(isTasksLoading);
+  const previousTaskIdsRef = useRef<Set<string>>(new Set(taskList.map(t => t.id)));
+
+  useGSAP(
+    () => {
+      if (!taskListContainerRef.current) return;
+
+      const wasLoadingFinished = previousLoadingStateRef.current && !isTasksLoading;
+      const isInitialMountWithItems = isInitialMountRef.current && taskList.length > 0;
+      isInitialMountRef.current = false;
+      previousLoadingStateRef.current = isTasksLoading;
+
+      const currentTaskIds = new Set(taskList.map(t => t.id));
+
+      // Staggered reveal: ONLY when loading finishes (initial load / refresh) or on initial mount with items
+      if ((isInitialMountWithItems || wasLoadingFinished) && taskList.length > 0) {
+        const taskCards = taskListContainerRef.current.querySelectorAll('.task-item-card');
+        if (taskCards.length > 0) {
+          gsap.fromTo(
+            taskCards,
+            { opacity: 0, y: 14 },
+            {
+              opacity: 1,
+              y: 0,
+              stagger: 0.05,
+              duration: 0.35,
+              ease: 'power2.out',
+              clearProps: 'opacity,transform',
+            }
+          );
+        }
+      } else {
+        // Find tasks that were just added
+        const newTasks = taskList.filter(t => !previousTaskIdsRef.current.has(t.id));
+        
+        if (newTasks.length > 0) {
+          const newTaskElements = newTasks
+            .map(t => taskListContainerRef.current?.querySelector(`[data-task-id="${t.id}"]`))
+            .filter(Boolean);
+            
+          if (newTaskElements.length > 0) {
+            gsap.fromTo(
+              newTaskElements,
+              { opacity: 0, y: -16, scale: 0.95 },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.35,
+                ease: 'back.out(1.5)',
+                stagger: 0.1,
+                clearProps: 'opacity,transform,scale',
+              }
+            );
+          }
+        }
+      }
+
+      previousTaskIdsRef.current = currentTaskIds;
+    },
+    { scope: taskListContainerRef, dependencies: [isTasksLoading, taskList] }
+  );
+
   return (
     <div className="md:col-span-2 space-y-4">
       <div className="flex justify-between items-center mb-1">
@@ -66,7 +138,7 @@ export function TaskList({
           <p className="text-xs text-muted-foreground/80">Add some tasks on the left to get started!</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div ref={taskListContainerRef} className="space-y-3">
           {taskList.map((currentTask) => (
             <TaskItem
               key={currentTask.id}
