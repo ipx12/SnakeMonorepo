@@ -17,6 +17,7 @@ Welcome to the engineering documentation for **SnakeMonorepo** — a modern full
 
 ### 3. Developer Guides ([`docs/guides/`](./guides/development-workflow.md))
 * [**Development Workflow**](./guides/development-workflow.md) — Turborepo commands, Vitest/Supertest testing strategy, and semantic naming conventions.
+* [**UI & Animation Guide**](./guides/ui-animation.md) — Watermelon UI styling and GSAP high-performance animation conventions.
 * [**End-to-End Zod Validation**](./guides/validation-guide.md) — Centralized Zod schemas in `@snake/types` consumed across React Hook Form and Express.
 
 ---

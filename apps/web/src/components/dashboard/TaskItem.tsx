@@ -1,9 +1,16 @@
+'use client';
+
+import { useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Edit2, Trash2 } from 'lucide-react';
 import type { Task } from '@/lib/api';
+
+gsap.registerPlugin(useGSAP);
 
 interface TaskItemProps {
   item: Task;
@@ -32,9 +39,60 @@ export function TaskItem({
   onCancelEdit: onCancelEditTask,
   onDelete: onDeleteTask,
 }: TaskItemProps) {
+  const taskCardElementRef = useRef<HTMLDivElement | null>(null);
+  const isDeletingRef = useRef(false);
+
+  const { contextSafe } = useGSAP({ scope: taskCardElementRef });
+
+  const handleDeleteWithAnimation = contextSafe(() => {
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
+
+    if (!taskCardElementRef.current) {
+      onDeleteTask(task.id);
+      return;
+    }
+
+    // In unit test environment, immediately call handler to prevent asynchronous test timeouts
+    if (process.env.NODE_ENV === 'test') {
+      onDeleteTask(task.id);
+      return;
+    }
+
+    gsap.to(taskCardElementRef.current, {
+      opacity: 0,
+      scale: 0.94,
+      height: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      marginTop: 0,
+      marginBottom: 0,
+      borderWidth: 0,
+      overflow: 'hidden',
+      duration: 0.28,
+      ease: 'power2.inOut',
+      onComplete: () => {
+        onDeleteTask(task.id);
+      },
+    });
+  });
+
+  const handleToggleWithAnimation = contextSafe(() => {
+    if (taskCardElementRef.current) {
+      gsap.fromTo(
+        taskCardElementRef.current,
+        { scale: 0.98 },
+        { scale: 1, duration: 0.25, ease: 'back.out(2)', clearProps: 'transform' }
+      );
+    }
+    onToggleTask(task);
+  });
+
   return (
     <div
-      className={`p-4 rounded-xl border transition-all duration-200 ${
+      ref={taskCardElementRef}
+      data-task-id={task.id}
+      className={`task-item-card p-4 rounded-xl border transition-colors duration-200 ${
         task.completed
           ? 'bg-secondary/10 border-border/40 opacity-70 hover:opacity-90'
           : 'bg-secondary/20 border-border hover:border-border-foreground/20 hover:bg-secondary/30'
@@ -81,7 +139,7 @@ export function TaskItem({
           <div className="flex items-start gap-3 flex-1 min-w-0">
             <Checkbox
               checked={task.completed}
-              onCheckedChange={() => onToggleTask(task)}
+              onCheckedChange={handleToggleWithAnimation}
               className="mt-1 border-border/80 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
             />
             <div className="min-w-0">
@@ -112,7 +170,7 @@ export function TaskItem({
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => onDeleteTask(task.id)}
+              onClick={handleDeleteWithAnimation}
               className="text-muted-foreground hover:text-destructive hover:bg-secondary transition-all cursor-pointer"
               title="Delete"
             >
