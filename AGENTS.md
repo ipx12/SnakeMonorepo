@@ -34,6 +34,8 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Default Demo Account**: `demo@watermelon.ui` / `password123`.
 - **Role-Based Access Control (RBAC)**: User roles defined in [`src/lib/roles.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/roles.ts) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`).
 - **Admin Dashboard**: Route `/admin/users` for administrators to view, search, and manage user accounts and session details.
+- **Server-Side Route Protection (SSR Guard)**: Server Component session verification and authorization implemented via [`src/lib/auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts) (`getServerSession()`). Forwards incoming Next.js cookies and headers to the backend with `cache: 'no-store'` and an `AbortSignal.timeout(5000)` safeguard. Eliminates layout flashing (Zero Layout Flash) and bundle exposure prior to client hydration.
+- **RSC to Client Hydration**: Route pages (`page.tsx`) act as lightweight Server Components that perform authorization checks and pass pre-validated user models (`initialUser`) down to client containers (`AdminUsersContainer`), avoiding redundant client session roundtrips.
 
 ### 3. Forms & Shared Validation Layer (End-to-End Zod)
 
@@ -70,9 +72,13 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 ### 6. Directory Structure Conventions
 
-- `apps/web/src/app/`: Next.js pages, layouts, and routes (`/`, `/login`, `/register`, `/admin/users`).
-- `apps/web/src/components/`: Visual UI components (`components/ui` for primitives, `components/dashboard` for feature widgets).
-- `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), authentication client (`auth-client.ts`), and helper utilities.
+- `apps/web/src/app/`: Next.js Server Component pages, layouts, and route handlers (`/`, `/login`, `/register`, `/admin/users`).
+- `apps/web/src/components/`: Visual UI components:
+  - `components/ui/`: Watermelon UI design primitives (`Button`, `Input`, `Table`, etc.).
+  - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)).
+  - `components/admin/`: Admin user management view ([`AdminUsersContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/admin/AdminUsersContainer.tsx)).
+  - `components/auth/`: Interactive client authentication forms ([`LoginForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/LoginForm.tsx), [`RegisterForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/RegisterForm.tsx)).
+- `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.
 - `apps/api/src/controllers/`: Express route controllers.
 - `apps/api/src/services/`: Database and business logic operations.
 - `apps/api/src/routes/`: Express modular route definitions.

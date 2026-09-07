@@ -40,3 +40,21 @@ export const requireAuth = async (request, response, next) => { ... }
 // Requires Admin role (returns 403 Forbidden for non-admin users)
 export const requireAdmin = async (request, response, next) => { ... }
 ```
+
+---
+
+## Server-Side Route Protection (Next.js SSR Guard)
+
+To prevent unauthorized bundle exposure and layout flashing (Zero Layout Flash), routes such as `/admin/users` enforce RBAC directly on the server inside Next.js Server Components before HTML and JS are delivered to the browser.
+
+### Implementation:
+1. **Server Session Helper (`apps/web/src/lib/auth-server.ts`)**:
+   - Uses Next.js `cookies()` and `headers()` to forward authentication headers to Express `GET /api/auth/get-session`.
+   - Employs `cache: 'no-store'` to prevent caching user sessions across requests.
+   - Enforces an `AbortSignal.timeout(5000)` safeguard to prevent SSR hanging on backend delays.
+2. **Page Authorization (`apps/web/src/app/admin/users/page.tsx`)**:
+   - Checks `getServerSession()`. If user is absent or `user.role !== UserRole.Admin`, returns the restricted UI or redirects directly on the server.
+   - If authorized, passes the pre-verified user model (`initialUser={user}`) directly to `<AdminUsersContainer />`.
+3. **Optimized Client Hydration**:
+   - The client container skips waiting for `useSession()` to finish loading, immediately initializing table data without UI flicker.
+
