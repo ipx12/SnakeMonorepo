@@ -62,32 +62,36 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
   );
 
   // Smooth cursor spotlight: card remains 100% physically stationary so buttons never shift
-  const handleCardMouseMove = contextSafe((mouseEvent: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardContainerRef.current || !spotlightElementRef.current) return;
+  const handleCardMouseMove = (mouseEvent: React.MouseEvent<HTMLDivElement>) => {
+    contextSafe(() => {
+      if (!cardContainerRef.current || !spotlightElementRef.current) return;
 
-    const cardBoundingRect = cardContainerRef.current.getBoundingClientRect();
-    const cursorOffsetX = mouseEvent.clientX - cardBoundingRect.left;
-    const cursorOffsetY = mouseEvent.clientY - cardBoundingRect.top;
+      const cardBoundingRect = cardContainerRef.current.getBoundingClientRect();
+      const cursorOffsetX = mouseEvent.clientX - cardBoundingRect.left;
+      const cursorOffsetY = mouseEvent.clientY - cardBoundingRect.top;
 
-    spotlightElementRef.current.style.setProperty('--spotlight-x', `${cursorOffsetX}px`);
-    spotlightElementRef.current.style.setProperty('--spotlight-y', `${cursorOffsetY}px`);
+      spotlightElementRef.current.style.setProperty('--spotlight-x', `${cursorOffsetX}px`);
+      spotlightElementRef.current.style.setProperty('--spotlight-y', `${cursorOffsetY}px`);
 
-    gsap.to(spotlightElementRef.current, {
-      opacity: 1,
-      duration: 0.2,
-      overwrite: 'auto',
-    });
-  });
+      gsap.to(spotlightElementRef.current, {
+        opacity: 1,
+        duration: 0.2,
+        overwrite: 'auto',
+      });
+    })();
+  };
 
-  const handleCardMouseLeave = contextSafe(() => {
-    if (!spotlightElementRef.current) return;
+  const handleCardMouseLeave = () => {
+    contextSafe(() => {
+      if (!spotlightElementRef.current) return;
 
-    gsap.to(spotlightElementRef.current, {
-      opacity: 0,
-      duration: 0.4,
-      overwrite: 'auto',
-    });
-  });
+      gsap.to(spotlightElementRef.current, {
+        opacity: 0,
+        duration: 0.4,
+        overwrite: 'auto',
+      });
+    })();
+  };
 
   return (
     <div

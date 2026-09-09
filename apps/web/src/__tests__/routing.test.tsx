@@ -29,26 +29,39 @@ import HomePage from '../app/page';
 import LoginPage from '../app/login/page';
 import RegisterPage from '../app/register/page';
 import AdminUsersPage from '../app/admin/users/page';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const testQueryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+  return render(<QueryClientProvider client={testQueryClient}>{ui}</QueryClientProvider>);
+}
 
 describe('App Router Pages Routing', () => {
-  it('should render the Home page component without crashing', () => {
-    render(<HomePage />);
-    expect(screen.getByText('Please Sign In')).toBeInTheDocument();
+  it('should render the Home page component without crashing', async () => {
+    const Component = await HomePage();
+    renderWithProviders(Component);
+    expect(await screen.findByText('Please Sign In')).toBeInTheDocument();
   });
 
   it('should render the Login page component without crashing', () => {
-    render(<LoginPage />);
+    renderWithProviders(<LoginPage />);
     expect(screen.getByRole('heading', { name: /Welcome Back/i })).toBeInTheDocument();
   });
 
   it('should render the Register page component without crashing', () => {
-    render(<RegisterPage />);
+    renderWithProviders(<RegisterPage />);
     expect(screen.getByRole('heading', { name: /Create New Account/i })).toBeInTheDocument();
   });
 
   it('should render the Admin Users page component without crashing', async () => {
     const Component = await AdminUsersPage();
-    render(Component);
+    renderWithProviders(Component);
     expect(await screen.findByText(/Access Restricted/i)).toBeInTheDocument();
   });
 });

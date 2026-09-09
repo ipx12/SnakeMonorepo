@@ -6,7 +6,7 @@ import { type User } from '@snake/types';
  * from the Express API by forwarding the Next.js incoming cookies and headers.
  * This is used for Server-Side Route Protection.
  */
-export async function getServerSession(): Promise<{ user: User | null; session: any | null }> {
+export async function getServerSession(): Promise<{ user: User | null; session: Record<string, unknown> | null }> {
   try {
     const nextCookies = await cookies();
     const nextHeaders = await headers();
@@ -37,11 +37,19 @@ export async function getServerSession(): Promise<{ user: User | null; session: 
     }
     
     const data = await response.json();
+    if (!data) {
+      return { user: null, session: null };
+    }
+    
     return { 
       user: data.user || null, 
       session: data.session || null 
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    // Re-throw Next.js internal dynamic rendering errors (e.g. DYNAMIC_SERVER_USAGE)
+    if (error && typeof error === 'object' && 'digest' in error && error.digest === 'DYNAMIC_SERVER_USAGE') {
+      throw error;
+    }
     console.error('[auth-server] Failed to fetch server session:', error);
     return { user: null, session: null };
   }

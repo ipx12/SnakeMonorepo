@@ -1,120 +1,55 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
-import { getTasks, createTask, updateTask, deleteTask, type Task } from '@/lib/api';
+import type { Task, User } from '@/lib/api';
+import { useTasks } from '@/hooks/use-tasks';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AuthStatusCard } from '@/components/dashboard/AuthStatusCard';
 import { CreateTaskForm } from '@/components/dashboard/CreateTaskForm';
 import { TaskList } from '@/components/dashboard/TaskList';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/sonner';
 import { LogIn, UserPlus, Lock } from 'lucide-react';
 
 export function DashboardContainer() {
   const { data: session, isPending: isAuthLoading } = useSession();
-  const user = session?.user as any;
-  const [taskList, setTaskList] = useState<Task[]>([]);
-  const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const user = session?.user ? (session.user as unknown as User) : null;
+
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState('');
   const [editingTaskDescription, setEditingTaskDescription] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
 
-  const fetchTaskList = async () => {
-    if (!user) return;
-    try {
-      setIsTasksLoading(true);
-      const fetchedTasks = await getTasks();
-      setTaskList(fetchedTasks);
-      setErrorMessage('');
-    } catch (caughtError: unknown) {
-      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
-      setErrorMessage(formattedErrorMessage);
-      toast.error(formattedErrorMessage);
-    } finally {
-      setIsTasksLoading(false);
-    }
-  };
+  // Encapsulated React Query logic
+  const {
+    taskList,
+    isTasksLoading,
+    errorMessage,
+    createTask,
+    toggleTaskCompletion,
+    updateTask,
+    deleteTask,
+    refreshTasks,
+  } = useTasks({ enabled: !!user });
 
-  useEffect(() => {
-    if (isAuthLoading) return;
-    let isCancelled = false;
-
-    if (!user) {
-      setTaskList((previousTaskList) => (previousTaskList.length > 0 ? [] : previousTaskList));
-      setIsTasksLoading(false);
-      return;
-    }
-
-    setIsTasksLoading(true);
-
-    getTasks()
-      .then((fetchedTasks) => {
-        if (!isCancelled) {
-          setTaskList(fetchedTasks);
-          setErrorMessage('');
-          setIsTasksLoading(false);
-        }
-      })
-      .catch((caughtError) => {
-        if (!isCancelled) {
-          const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
-          setErrorMessage(formattedErrorMessage);
-          toast.error(formattedErrorMessage);
-          setIsTasksLoading(false);
-        }
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [user, isAuthLoading]);
-
-  const handleCreateTask = async (event: React.FormEvent) => {
+  const handleCreateTask = (event: React.FormEvent) => {
     event.preventDefault();
     if (!newTaskTitle.trim()) return;
-
-    try {
-      const newlyCreatedTask = await createTask(newTaskTitle, newTaskDescription);
-      setTaskList((previousTasks) => [...previousTasks, newlyCreatedTask]);
-      setNewTaskTitle('');
-      setNewTaskDescription('');
-      toast.success('Task created successfully');
-    } catch (caughtError: unknown) {
-      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
-      setErrorMessage(formattedErrorMessage);
-      toast.error(formattedErrorMessage);
-    }
+    createTask(
+      { title: newTaskTitle, description: newTaskDescription },
+      {
+        onSuccess: () => {
+          setNewTaskTitle('');
+          setNewTaskDescription('');
+        },
+      }
+    );
   };
 
-  const handleToggleTaskCompletion = async (targetTask: Task) => {
-    const previousTaskList = [...taskList];
-    const newCompletedStatus = !targetTask.completed;
-
-    // Optimistic UI update
-    setTaskList((currentTasks) =>
-      currentTasks.map((currentTask) =>
-        currentTask.id === targetTask.id ? { ...currentTask, completed: newCompletedStatus } : currentTask
-      )
-    );
-
-    try {
-      const updatedTask = await updateTask(targetTask.id, { completed: newCompletedStatus });
-      setTaskList((currentTasks) =>
-        currentTasks.map((currentTask) => (currentTask.id === targetTask.id ? updatedTask : currentTask))
-      );
-      toast.success(newCompletedStatus ? 'Task marked as completed' : 'Task marked as pending');
-    } catch (caughtError: unknown) {
-      // Rollback to previous state on failure
-      setTaskList(previousTaskList);
-      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to update task';
-      setErrorMessage(formattedErrorMessage);
-      toast.error(formattedErrorMessage);
-    }
+  const handleToggleTaskCompletion = (targetTask: Task) => {
+    toggleTaskCompletion(targetTask);
   };
 
   const handleStartTaskEdit = (targetTask: Task) => {
@@ -123,43 +58,21 @@ export function DashboardContainer() {
     setEditingTaskDescription(targetTask.description);
   };
 
-  const handleSaveTaskEdit = async (event: React.FormEvent) => {
+  const handleSaveTaskEdit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!editingTask || !editingTaskTitle.trim()) return;
-
-    try {
-      const updatedTask = await updateTask(editingTask.id, {
-        title: editingTaskTitle,
-        description: editingTaskDescription,
-      });
-      setTaskList((previousTasks) =>
-        previousTasks.map((currentTask) => (currentTask.id === editingTask.id ? updatedTask : currentTask))
-      );
-      setEditingTask(null);
-      toast.success('Task updated successfully');
-    } catch (caughtError: unknown) {
-      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Something went wrong';
-      setErrorMessage(formattedErrorMessage);
-      toast.error(formattedErrorMessage);
-    }
+    updateTask(
+      { id: editingTask.id, title: editingTaskTitle, description: editingTaskDescription },
+      {
+        onSuccess: () => {
+          setEditingTask(null);
+        },
+      }
+    );
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    const previousTaskList = [...taskList];
-
-    // Optimistic UI update
-    setTaskList((currentTasks) => currentTasks.filter((currentTask) => currentTask.id !== taskId));
-
-    try {
-      await deleteTask(taskId);
-      toast.success('Task deleted');
-    } catch (caughtError: unknown) {
-      // Rollback to previous state on failure
-      setTaskList(previousTaskList);
-      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to delete task';
-      setErrorMessage(formattedErrorMessage);
-      toast.error(formattedErrorMessage);
-    }
+  const handleDeleteTask = (taskId: string) => {
+    deleteTask(taskId);
   };
 
   return (
@@ -220,7 +133,7 @@ export function DashboardContainer() {
               editDescription={editingTaskDescription}
               setEditTitle={setEditingTaskTitle}
               setEditDescription={setEditingTaskDescription}
-              onRefresh={fetchTaskList}
+              onRefresh={refreshTasks}
               onToggle={handleToggleTaskCompletion}
               onStartEdit={handleStartTaskEdit}
               onSaveEdit={handleSaveTaskEdit}

@@ -209,3 +209,21 @@ export interface DatabaseSchema {
   verification: VerificationTable;
   task: TaskTable;
 }
+
+// ---------------------------------------------------------------------------
+// Query Keys (TanStack Query / Cache Keys)
+// ---------------------------------------------------------------------------
+
+export const taskKeys = {
+  all: ['tasks'] as const,
+  lists: () => [...taskKeys.all, 'list'] as const,
+  details: () => [...taskKeys.all, 'detail'] as const,
+  detail: (taskId: string) => [...taskKeys.details(), taskId] as const,
+};
+
+export const adminUserKeys = {
+  all: ['adminUsers'] as const,
+  lists: () => [...adminUserKeys.all, 'list'] as const,
+  list: (queryParams: AdminUsersQueryParams) => [...adminUserKeys.all, queryParams] as const,
+};
+

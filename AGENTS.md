@@ -96,8 +96,23 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Layout Constraints**: Use fluid typography (`text-2xl sm:text-4xl`), responsive padding (`px-3 sm:px-6`), `min-w-0` on flex children, and isolated `overflow-x-auto` for wide components (tables/code blocks).
 - **Verification**: When introducing new pages or major UI sections, verify responsive integrity across 320px, 768px, and 1280px viewports using Playwright or browser checks.
 
+### 9. Server State Management (TanStack Query v5)
+
+- **Mandatory MCP Documentation Verification**: When creating, refactoring, or troubleshooting any TanStack Query functionality (hooks, queryOptions, SSR hydration, persisters, devtools), always query the `tanstack-query-docs` MCP server (`search_query_documentation`, `fetch_query_documentation`, `search_query_code`) to ensure patterns strictly align with the latest official TanStack documentation and breaking changes are avoided.
+- **Architecture & Providers**: `@tanstack/react-query` v5 with `@tanstack/react-query-devtools` wrapped in [`QueryProvider`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/providers/query-provider.tsx) in the root layout with `staleTime: 60s`. Utilizes the official Next.js App Router singleton factory pattern (`getQueryClient()`) with a `browserQueryClient` instance and `isServer` guard (avoiding `useState` to prevent cache destruction during React `Suspense` initial render cycles).
+- **Query Key Factories**: Centralized in `@snake/types` (`taskKeys`, `adminUserKeys`) following hierarchical array conventions.
+- **Reusable Query Options**: Centralized in [`apps/web/src/lib/query-options.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/query-options.ts) (`tasksQueryOptions`, `adminUsersQueryOptions`) using TanStack's `queryOptions` helper with `AbortSignal` propagation.
+- **Custom Encapsulated Hooks**: All server state data access must be encapsulated in reusable hooks in `apps/web/src/hooks/`:
+  - [`useTasks`](file:///d:/WEB/SnakeMonorepo/apps/web/src/hooks/use-tasks.ts): Queries, mutations, and optimistic updates with rollback (`onMutate`, `onError`, `onSettled`).
+  - [`useAdminUsers`](file:///d:/WEB/SnakeMonorepo/apps/web/src/hooks/use-admin-users.ts): Paginated & debounced (300ms) user queries with `placeholderData: keepPreviousData`.
+- **Server-Side Rendering (SSR) Prefetching**: Server Components (`app/page.tsx`, `app/admin/users/page.tsx`) execute prefetching with an isolated `new QueryClient()` instance per component (as officially recommended by TanStack to avoid query cross-serialization bloat) via `await queryClient.query({ queryKey, queryFn }).catch(noop)` with `<HydrationBoundary state={dehydrate(queryClient)}>`.
+- **Session Cache Isolation**: `queryClient.clear()` is invoked on logout in [`Navbar.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/Navbar.tsx) to prevent cross-session cache persistence.
+
 ## AGENTS.md Maintenance Policy
 
 1. **Automated Documentation**: Whenever new technologies, routes, endpoints, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
 2. **User Confirmation Prompt**: Always ask the user if newly introduced technologies or features should be added to `AGENTS.md`.
 3. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
+4. **Mandatory Linter & Test Verification**: Always run the linter (`npm run lint` / `turbo run lint`) and tests (`npm run test`) to verify that there are zero warnings, zero lint errors, and all tests pass before completing any task.
+5. **Continuous Documentation Sync (`docs/`)**: Constantly check and, if needed, update the documentation in the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory (architecture overviews, API specs, developer guides) whenever architecture, state management, dependencies, routes, or workflows change.
+

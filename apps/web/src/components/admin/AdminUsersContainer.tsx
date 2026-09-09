@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from '@/lib/auth-client';
-import { getAdminUsers, type AdminUserDetail, type PaginationMeta } from '@/lib/api';
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/sonner';
+import { useAdminUsers } from '@/hooks/use-admin-users';
 import {
   Table,
   TableBody,
@@ -48,32 +48,28 @@ export interface AdminUsersContainerProps {
 export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = {}) {
   const { data: session, isPending: isAuthLoading } = useSession();
   const user = initialUser || session?.user;
-  const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
-  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
-    page: 1,
-    limit: 10,
-    totalCount: 0,
-    totalPages: 1,
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [isUsersLoading, setIsUsersLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const isAuthorizedAdmin = !!user && (user as { role?: string }).role === UserRole.Admin;
+
+  const {
+    currentPage,
+    pageSize,
+    searchQuery,
+    setSearchQuery,
+    debouncedSearchQuery,
+    usersList,
+    paginationMeta,
+    isUsersLoading,
+    isFetching,
+    errorMessage,
+    refetch,
+    handlePageChange,
+    handlePageSizeChange,
+    totalUsers,
+    adminCount,
+    regularCount,
+  } = useAdminUsers({ enabled: isAuthorizedAdmin });
+
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
-
-  // Debounce search input by 300ms
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery.trim());
-      setCurrentPage(1); // Reset to first page on search query change
-    }, 300);
-
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [searchQuery]);
 
   const handleCopyToClipboard = async (textToCopy: string, label: string) => {
     try {
@@ -83,55 +79,6 @@ export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = 
       toast.error('Failed to copy to clipboard');
     }
   };
-
-  const fetchUsers = async (targetPage: number = currentPage, targetLimit: number = pageSize, targetSearch: string = debouncedSearchQuery) => {
-    try {
-      setIsUsersLoading(true);
-      setErrorMessage('');
-      const apiResponse = await getAdminUsers({
-        page: targetPage,
-        limit: targetLimit,
-        search: targetSearch,
-      });
-      setUsersList(apiResponse.users);
-      setPaginationMeta(apiResponse.pagination);
-    } catch (caughtError: unknown) {
-      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to load the user list';
-      setErrorMessage(formattedErrorMessage);
-      toast.error(formattedErrorMessage);
-    } finally {
-      setIsUsersLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let isCancelled = false;
-    if (!initialUser && isAuthLoading) return;
-
-    if ((user as any)?.role === UserRole.Admin) {
-      fetchUsers(currentPage, pageSize, debouncedSearchQuery);
-    } else {
-      setIsUsersLoading(false);
-    }
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [user, isAuthLoading, currentPage, pageSize, debouncedSearchQuery, initialUser]);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > paginationMeta.totalPages) return;
-    setCurrentPage(newPage);
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
-    setCurrentPage(1);
-  };
-
-  const totalUsers = paginationMeta.totalCount;
-  const adminCount = usersList.filter((userItem) => userItem.role === UserRole.Admin).length;
-  const regularCount = usersList.filter((userItem) => userItem.role === UserRole.User).length;
 
   if (!initialUser && isAuthLoading) {
     return (
@@ -146,7 +93,7 @@ export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = 
     );
   }
 
-  if (!user || (user as any).role !== UserRole.Admin) {
+  if (!user || (user as { role?: string }).role !== UserRole.Admin) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md p-8 border border-destructive/30 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center space-y-5">
@@ -196,13 +143,13 @@ export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = 
           </div>
 
           <Button
-            onClick={() => fetchUsers(currentPage, pageSize, debouncedSearchQuery)}
-            disabled={isUsersLoading}
+            onClick={() => refetch()}
+            disabled={isFetching}
             variant="outline"
             size="sm"
             className="border-purple-500/30 hover:bg-purple-500/10 text-purple-300 text-xs font-semibold gap-2 self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`size-3.5 ${isUsersLoading ? 'animate-spin' : ''}`} /> Refresh List
+            <RefreshCw className={`size-3.5 ${isFetching ? 'animate-spin' : ''}`} /> Refresh List
           </Button>
         </div>
 
@@ -496,4 +443,3 @@ export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = 
     </div>
   );
 }
-
