@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { UserRole } from '@snake/types';
 import { Button } from '@/components/ui/button';
 import { LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucide-react';
@@ -10,7 +11,11 @@ import { LogOut, LogIn, UserPlus, LayoutDashboard, Sparkles, Users } from 'lucid
 export function Navbar() {
   const { data: session, isPending: isAuthLoading } = useSession();
   const user = session?.user;
-  const logout = async () => await signOut();
+  const queryClient = useQueryClient();
+  const logout = async () => {
+    await signOut();
+    queryClient.clear();
+  };
   const pathname = usePathname();
 
   return (
@@ -46,7 +51,7 @@ export function Navbar() {
             <span className="hidden sm:inline">Dashboard</span>
           </Link>
 
-          {(user as any)?.role === UserRole.Admin && (
+          {(user as { role?: string })?.role === UserRole.Admin && (
             <Link
               href="/admin/users"
               title="Users"

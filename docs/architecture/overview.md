@@ -58,6 +58,11 @@ The backend follows a strict **Layered Architecture** adhering to the **Single R
   * **Server Component Pages (`src/app/`)**: Lightweight server-rendered entrypoints (`/`, `/login`, `/register`, `/admin/users`) that perform server-side session checks and forward validated props down to client containers.
   * **Feature Containers (`src/components/`)**: Client-side interactive components (`DashboardContainer`, `AdminUsersContainer`, `LoginForm`, `RegisterForm`) isolated with `'use client'`.
   * **SSR Route Protection (`src/lib/auth-server.ts`)**: Secure server-side session retrieval (`getServerSession`) forwarding cookies and headers with `cache: 'no-store'` and timeout safeguards.
+* **Server State Management (TanStack Query v5)**:
+  * **Encapsulated Hooks (`src/hooks/`)**: Reusable data hooks (`useTasks`, `useAdminUsers`) with optimistic updates and automatic rollback.
+  * **Query Options (`src/lib/query-options.ts`)**: Centralized `queryOptions` integrating query keys and fetch calls with `AbortSignal` cancellation.
+  * **SSR Prefetching & Hydration**: Server Components prefetch data with `queryClient.query({ ... }).catch(noop)` and hydrate client trees via `<HydrationBoundary state={dehydrate(queryClient)}>`.
+  * **Session Isolation**: Automatic `queryClient.clear()` on logout prevents cross-user stale cache persistence.
 * **Watermelon UI Design System**: Tailored UI primitives built on Radix UI and Tailwind CSS v4 (`components/ui/`).
 * **Authentication**: Native Better Auth hooks (`useSession`, `signIn`, `signUp`) powered by the browser client (`authClient`), paired with server-side authentication guards.
 * **Forms & Validation**: `react-hook-form` paired with `@hookform/resolvers/zod` consuming schemas directly from `@snake/types`.

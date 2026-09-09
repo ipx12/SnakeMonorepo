@@ -52,7 +52,7 @@ export function RegisterForm() {
         email: data.email,
         password: data.password,
         role: data.role,
-      } as any);
+      } as Parameters<typeof signUp.email>[0] & { role: UserRole });
       if (error) throw new Error(error.message || 'Failed to register. Please try again.');
       
       setSuccessMsg('Account created successfully!');

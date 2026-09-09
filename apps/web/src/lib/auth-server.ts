@@ -6,7 +6,7 @@ import { type User } from '@snake/types';
  * from the Express API by forwarding the Next.js incoming cookies and headers.
  * This is used for Server-Side Route Protection.
  */
-export async function getServerSession(): Promise<{ user: User | null; session: any | null }> {
+export async function getServerSession(): Promise<{ user: User | null; session: Record<string, unknown> | null }> {
   try {
     const nextCookies = await cookies();
     const nextHeaders = await headers();

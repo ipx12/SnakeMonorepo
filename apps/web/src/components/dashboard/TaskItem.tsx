@@ -44,49 +44,53 @@ export function TaskItem({
 
   const { contextSafe } = useGSAP({ scope: taskCardElementRef });
 
-  const handleDeleteWithAnimation = contextSafe(() => {
-    if (isDeletingRef.current) return;
-    isDeletingRef.current = true;
+  const handleDeleteWithAnimation = () => {
+    contextSafe(() => {
+      if (isDeletingRef.current) return;
+      isDeletingRef.current = true;
 
-    if (!taskCardElementRef.current) {
-      onDeleteTask(task.id);
-      return;
-    }
-
-    // In unit test environment, immediately call handler to prevent asynchronous test timeouts
-    if (process.env.NODE_ENV === 'test') {
-      onDeleteTask(task.id);
-      return;
-    }
-
-    gsap.to(taskCardElementRef.current, {
-      opacity: 0,
-      scale: 0.94,
-      height: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-      marginTop: 0,
-      marginBottom: 0,
-      borderWidth: 0,
-      overflow: 'hidden',
-      duration: 0.28,
-      ease: 'power2.inOut',
-      onComplete: () => {
+      if (!taskCardElementRef.current) {
         onDeleteTask(task.id);
-      },
-    });
-  });
+        return;
+      }
 
-  const handleToggleWithAnimation = contextSafe(() => {
-    if (taskCardElementRef.current) {
-      gsap.fromTo(
-        taskCardElementRef.current,
-        { scale: 0.98 },
-        { scale: 1, duration: 0.25, ease: 'back.out(2)', clearProps: 'transform' }
-      );
-    }
-    onToggleTask(task);
-  });
+      // In unit test environment, immediately call handler to prevent asynchronous test timeouts
+      if (process.env.NODE_ENV === 'test') {
+        onDeleteTask(task.id);
+        return;
+      }
+
+      gsap.to(taskCardElementRef.current, {
+        opacity: 0,
+        scale: 0.94,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        borderWidth: 0,
+        overflow: 'hidden',
+        duration: 0.28,
+        ease: 'power2.inOut',
+        onComplete: () => {
+          onDeleteTask(task.id);
+        },
+      });
+    })();
+  };
+
+  const handleToggleWithAnimation = () => {
+    contextSafe(() => {
+      if (taskCardElementRef.current) {
+        gsap.fromTo(
+          taskCardElementRef.current,
+          { scale: 0.98 },
+          { scale: 1, duration: 0.25, ease: 'back.out(2)', clearProps: 'transform' }
+        );
+      }
+      onToggleTask(task);
+    })();
+  };
 
   return (
     <div

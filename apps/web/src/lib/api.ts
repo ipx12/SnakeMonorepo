@@ -30,8 +30,8 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 const TASKS_API_URL = `${BASE_URL}/tasks`;
 
 // Tasks API calls
-export async function getTasks(): Promise<Task[]> {
-  const apiResponse = await fetch(TASKS_API_URL, { credentials: 'include' });
+export async function getTasks(signal?: AbortSignal): Promise<Task[]> {
+  const apiResponse = await fetch(TASKS_API_URL, { credentials: 'include', signal });
   if (!apiResponse.ok) throw new Error('Failed to fetch tasks');
   return apiResponse.json();
 }
@@ -70,7 +70,7 @@ export async function deleteTask(taskId: string): Promise<void> {
 }
 
 
-export async function getAdminUsers(queryParams?: AdminUsersQueryParams): Promise<AdminUsersResponse> {
+export async function getAdminUsers(queryParams?: AdminUsersQueryParams, signal?: AbortSignal): Promise<AdminUsersResponse> {
   const urlSearchParams = new URLSearchParams();
   if (queryParams?.page !== undefined) urlSearchParams.set('page', String(queryParams.page));
   if (queryParams?.limit !== undefined) urlSearchParams.set('limit', String(queryParams.limit));
@@ -79,7 +79,7 @@ export async function getAdminUsers(queryParams?: AdminUsersQueryParams): Promis
   const queryString = urlSearchParams.toString();
   const requestUrl = queryString ? `${BASE_URL}/admin/users?${queryString}` : `${BASE_URL}/admin/users`;
 
-  const apiResponse = await fetch(requestUrl, { credentials: 'include' });
+  const apiResponse = await fetch(requestUrl, { credentials: 'include', signal });
   if (!apiResponse.ok) {
     const errorResponseData = await apiResponse.json().catch(() => ({}));
     throw new Error(errorResponseData.message || 'Failed to fetch users list');
