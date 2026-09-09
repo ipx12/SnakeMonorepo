@@ -68,7 +68,9 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Service Layer Unit Testing**: Direct database and business logic testing in `apps/api/src/__tests__/services.test.ts`.
 - **Zod Schema Unit Testing**: Validation edge cases testing in `apps/web/src/__tests__/schemas.test.ts`.
 - **UI Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 47 unit & integration tests across workspaces (17 in `apps/api`, 30 in `apps/web`).
+- **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
+- **Admin UI Component Testing**: Integration tests in [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx) testing access controls, stats cards, user rows, search filtering, and pagination navigation.
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 64 unit & integration tests across workspaces (17 in `apps/api`, 47 in `apps/web`).
 
 ### 6. Directory Structure Conventions
 
