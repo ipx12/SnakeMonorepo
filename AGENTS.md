@@ -98,13 +98,14 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 ### 9. Server State Management (TanStack Query v5)
 
-- **Architecture & Providers**: `@tanstack/react-query` v5 with `@tanstack/react-query-devtools` wrapped in [`QueryProvider`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/providers/query-provider.tsx) in root layout with `staleTime: 60s`.
+- **Mandatory MCP Documentation Verification**: When creating, refactoring, or troubleshooting any TanStack Query functionality (hooks, queryOptions, SSR hydration, persisters, devtools), always query the `tanstack-query-docs` MCP server (`search_query_documentation`, `fetch_query_documentation`, `search_query_code`) to ensure patterns strictly align with the latest official TanStack documentation and breaking changes are avoided.
+- **Architecture & Providers**: `@tanstack/react-query` v5 with `@tanstack/react-query-devtools` wrapped in [`QueryProvider`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/providers/query-provider.tsx) in the root layout with `staleTime: 60s`. Utilizes the official Next.js App Router singleton factory pattern (`getQueryClient()`) with a `browserQueryClient` instance and `isServer` guard (avoiding `useState` to prevent cache destruction during React `Suspense` initial render cycles).
 - **Query Key Factories**: Centralized in `@snake/types` (`taskKeys`, `adminUserKeys`) following hierarchical array conventions.
 - **Reusable Query Options**: Centralized in [`apps/web/src/lib/query-options.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/query-options.ts) (`tasksQueryOptions`, `adminUsersQueryOptions`) using TanStack's `queryOptions` helper with `AbortSignal` propagation.
 - **Custom Encapsulated Hooks**: All server state data access must be encapsulated in reusable hooks in `apps/web/src/hooks/`:
   - [`useTasks`](file:///d:/WEB/SnakeMonorepo/apps/web/src/hooks/use-tasks.ts): Queries, mutations, and optimistic updates with rollback (`onMutate`, `onError`, `onSettled`).
   - [`useAdminUsers`](file:///d:/WEB/SnakeMonorepo/apps/web/src/hooks/use-admin-users.ts): Paginated & debounced (300ms) user queries with `placeholderData: keepPreviousData`.
-- **Server-Side Rendering (SSR) Prefetching**: Server Components (`app/page.tsx`, `app/admin/users/page.tsx`) execute prefetching via `await queryClient.query({ queryKey, queryFn }).catch(noop)` with `<HydrationBoundary state={dehydrate(queryClient)}>`.
+- **Server-Side Rendering (SSR) Prefetching**: Server Components (`app/page.tsx`, `app/admin/users/page.tsx`) execute prefetching with an isolated `new QueryClient()` instance per component (as officially recommended by TanStack to avoid query cross-serialization bloat) via `await queryClient.query({ queryKey, queryFn }).catch(noop)` with `<HydrationBoundary state={dehydrate(queryClient)}>`.
 - **Session Cache Isolation**: `queryClient.clear()` is invoked on logout in [`Navbar.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/Navbar.tsx) to prevent cross-session cache persistence.
 
 ## AGENTS.md Maintenance Policy

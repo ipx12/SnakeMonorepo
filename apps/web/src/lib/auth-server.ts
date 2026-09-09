@@ -45,9 +45,9 @@ export async function getServerSession(): Promise<{ user: User | null; session: 
       user: data.user || null, 
       session: data.session || null 
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw Next.js internal dynamic rendering errors (e.g. DYNAMIC_SERVER_USAGE)
-    if (error && typeof error === 'object' && error.digest === 'DYNAMIC_SERVER_USAGE') {
+    if (error && typeof error === 'object' && 'digest' in error && error.digest === 'DYNAMIC_SERVER_USAGE') {
       throw error;
     }
     console.error('[auth-server] Failed to fetch server session:', error);

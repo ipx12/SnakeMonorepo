@@ -59,9 +59,10 @@ The backend follows a strict **Layered Architecture** adhering to the **Single R
   * **Feature Containers (`src/components/`)**: Client-side interactive components (`DashboardContainer`, `AdminUsersContainer`, `LoginForm`, `RegisterForm`) isolated with `'use client'`.
   * **SSR Route Protection (`src/lib/auth-server.ts`)**: Secure server-side session retrieval (`getServerSession`) forwarding cookies and headers with `cache: 'no-store'` and timeout safeguards.
 * **Server State Management (TanStack Query v5)**:
+  * **Architecture & Providers**: Root `<QueryProvider>` utilizing the official `getQueryClient()` singleton pattern with `isServer` check to preserve cache across React Suspense boundaries.
   * **Encapsulated Hooks (`src/hooks/`)**: Reusable data hooks (`useTasks`, `useAdminUsers`) with optimistic updates and automatic rollback.
   * **Query Options (`src/lib/query-options.ts`)**: Centralized `queryOptions` integrating query keys and fetch calls with `AbortSignal` cancellation.
-  * **SSR Prefetching & Hydration**: Server Components prefetch data with `queryClient.query({ ... }).catch(noop)` and hydrate client trees via `<HydrationBoundary state={dehydrate(queryClient)}>`.
+  * **SSR Prefetching & Hydration**: Server Components prefetch data with dedicated, isolated `new QueryClient()` instances via `queryClient.query({ ... }).catch(noop)` and hydrate client trees via `<HydrationBoundary state={dehydrate(queryClient)}>`.
   * **Session Isolation**: Automatic `queryClient.clear()` on logout prevents cross-user stale cache persistence.
 * **Watermelon UI Design System**: Tailored UI primitives built on Radix UI and Tailwind CSS v4 (`components/ui/`).
 * **Authentication**: Native Better Auth hooks (`useSession`, `signIn`, `signUp`) powered by the browser client (`authClient`), paired with server-side authentication guards.
