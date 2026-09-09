@@ -22,7 +22,7 @@ export function useTasks(options: UseTasksOptions = {}) {
     error,
     refetch,
   } = useQuery({
-    ...tasksQueryOptions(),
+    ...tasksQueryOptions,
     enabled,
   });
 

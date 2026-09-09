@@ -6,11 +6,10 @@ import { getTasks, getAdminUsers } from '@/lib/api';
  * Type-safe query options for task list queries.
  * Automatically ties the queryKey with queryFn and supports AbortSignal.
  */
-export const tasksQueryOptions = () =>
-  queryOptions({
-    queryKey: taskKeys.all,
-    queryFn: ({ signal }) => getTasks(signal),
-  });
+export const tasksQueryOptions = queryOptions({
+  queryKey: taskKeys.all,
+  queryFn: ({ signal }) => getTasks(signal),
+});
 
 /**
  * Type-safe query options for admin user list queries.

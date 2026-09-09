@@ -37,6 +37,10 @@ export async function getServerSession(): Promise<{ user: User | null; session: 
     }
     
     const data = await response.json();
+    if (!data) {
+      return { user: null, session: null };
+    }
+    
     return { 
       user: data.user || null, 
       session: data.session || null 
