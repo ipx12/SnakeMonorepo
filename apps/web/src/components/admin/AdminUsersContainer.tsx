@@ -1,0 +1,499 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useSession } from '@/lib/auth-client';
+import { getAdminUsers, type AdminUserDetail, type PaginationMeta } from '@/lib/api';
+import { UserRole } from '@snake/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Users,
+  ShieldAlert,
+  ArrowLeft,
+  Search,
+  RefreshCw,
+  Crown,
+  UserCheck,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  Key,
+  Info,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+} from 'lucide-react';
+
+export interface AdminUsersContainerProps {
+  initialUser?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  } | null;
+}
+
+export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = {}) {
+  const { data: session, isPending: isAuthLoading } = useSession();
+  const user = initialUser || session?.user;
+  const [usersList, setUsersList] = useState<AdminUserDetail[]>([]);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    page: 1,
+    limit: 10,
+    totalCount: 0,
+    totalPages: 1,
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+
+  // Debounce search input by 300ms
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+      setCurrentPage(1); // Reset to first page on search query change
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchQuery]);
+
+  const handleCopyToClipboard = async (textToCopy: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success(`${label} copied to clipboard`);
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
+  const fetchUsers = async (targetPage: number = currentPage, targetLimit: number = pageSize, targetSearch: string = debouncedSearchQuery) => {
+    try {
+      setIsUsersLoading(true);
+      setErrorMessage('');
+      const apiResponse = await getAdminUsers({
+        page: targetPage,
+        limit: targetLimit,
+        search: targetSearch,
+      });
+      setUsersList(apiResponse.users);
+      setPaginationMeta(apiResponse.pagination);
+    } catch (caughtError: unknown) {
+      const formattedErrorMessage = caughtError instanceof Error ? caughtError.message : 'Failed to load the user list';
+      setErrorMessage(formattedErrorMessage);
+      toast.error(formattedErrorMessage);
+    } finally {
+      setIsUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (!initialUser && isAuthLoading) return;
+
+    if ((user as any)?.role === UserRole.Admin) {
+      fetchUsers(currentPage, pageSize, debouncedSearchQuery);
+    } else {
+      setIsUsersLoading(false);
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, isAuthLoading, currentPage, pageSize, debouncedSearchQuery, initialUser]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > paginationMeta.totalPages) return;
+    setCurrentPage(newPage);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+
+  const totalUsers = paginationMeta.totalCount;
+  const adminCount = usersList.filter((userItem) => userItem.role === UserRole.Admin).length;
+  const regularCount = usersList.filter((userItem) => userItem.role === UserRole.User).length;
+
+  if (!initialUser && isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
+        <div className="py-20 px-8 border border-border/60 rounded-2xl bg-secondary/10 backdrop-blur-xl flex flex-col items-center justify-center space-y-4 shadow-xl">
+          <div className="size-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+          <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Loading user list...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || (user as any).role !== UserRole.Admin) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-md p-8 border border-destructive/30 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-2xl flex flex-col items-center text-center space-y-5">
+          <div className="size-16 rounded-full bg-destructive/15 border border-destructive/30 flex items-center justify-center text-destructive">
+            <ShieldAlert className="size-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Access Restricted</h2>
+            <p className="text-sm text-muted-foreground">
+              The admin panel is only accessible to users with the <span className="font-semibold text-purple-400">Admin</span> role.
+            </p>
+          </div>
+          <Link href="/">
+            <Button className="bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-xs px-5 py-2.5 rounded-xl gap-2 cursor-pointer shadow-lg shadow-emerald-500/20">
+              <ArrowLeft className="size-4" /> Back to Home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const startRecordIndex = totalUsers === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endRecordIndex = Math.min(currentPage * pageSize, totalUsers);
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="w-full max-w-6xl space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Link href="/">
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+                  <ArrowLeft className="size-4 mr-1" /> Home
+                </Button>
+              </Link>
+              <span className="text-xs text-muted-foreground">/</span>
+              <span className="text-xs font-semibold text-purple-400">Admin Panel</span>
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight bg-linear-to-r from-purple-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent flex items-center gap-3">
+              <Users className="size-8 text-purple-400" /> All System Users
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              A complete list of registered accounts with server-side search, pagination, and detailed user metrics
+            </p>
+          </div>
+
+          <Button
+            onClick={() => fetchUsers(currentPage, pageSize, debouncedSearchQuery)}
+            disabled={isUsersLoading}
+            variant="outline"
+            size="sm"
+            className="border-purple-500/30 hover:bg-purple-500/10 text-purple-300 text-xs font-semibold gap-2 self-start sm:self-auto cursor-pointer"
+          >
+            <RefreshCw className={`size-3.5 ${isUsersLoading ? 'animate-spin' : ''}`} /> Refresh List
+          </Button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/80 flex items-center gap-4 shadow-sm">
+            <div className="size-11 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+              <Users className="size-6" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Total Registered</p>
+              <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/80 flex items-center gap-4 shadow-sm">
+            <div className="size-11 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Crown className="size-6" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Admins on Page</p>
+              <p className="text-2xl font-bold text-amber-300">{adminCount}</p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-secondary/20 border border-border/80 flex items-center gap-4 shadow-sm">
+            <div className="size-11 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <UserCheck className="size-6" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-medium">Users on Page</p>
+              <p className="text-2xl font-bold text-emerald-300">{regularCount}</p>
+            </div>
+          </div>
+        </div>
+
+        {errorMessage && (
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium animate-in fade-in">
+            {errorMessage}
+          </div>
+        )}
+
+        {/* Filter and Search Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by name, email, ID or role..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="pl-9 bg-secondary/30 border-border/80 text-sm focus-visible:ring-purple-500"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Rows per page:</span>
+            <div className="flex items-center gap-1 bg-secondary/30 p-1 rounded-lg border border-border/80">
+              {[5, 10, 20].map((sizeOption) => (
+                <button
+                  key={sizeOption}
+                  type="button"
+                  onClick={() => handlePageSizeChange(sizeOption)}
+                  className={`px-2.5 py-1 text-xs rounded font-medium transition-colors cursor-pointer ${
+                    pageSize === sizeOption
+                      ? 'bg-purple-500 text-white shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {sizeOption}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Users Table / List */}
+        <div className="w-full max-w-full min-w-0 border border-border/80 rounded-2xl bg-secondary/15 backdrop-blur-xl shadow-xl overflow-hidden">
+          <Table className="min-w-[640px]">
+            <TableHeader className="bg-secondary/40">
+              <TableRow className="border-border/60 hover:bg-transparent">
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">User</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Account ID</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Role</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Email Verified</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3">Created At</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase py-3 text-right">Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-border/50">
+              {usersList.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-12 text-center text-muted-foreground text-sm">
+                    {isUsersLoading ? 'Loading users...' : debouncedSearchQuery ? 'No users found matching your query' : 'No users found'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                usersList.map((userItem) => {
+                  const isExpanded = expandedUserId === userItem.id;
+                  const createdDate = userItem.createdAt
+                    ? new Date(userItem.createdAt).toLocaleDateString('en-US', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : '—';
+
+                  return (
+                    <React.Fragment key={userItem.id}>
+                      <TableRow className="hover:bg-secondary/30 transition-colors border-border/50">
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="size-8 sm:size-9 rounded-full bg-linear-to-tr from-purple-500 via-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow">
+                              {userItem.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground text-sm">{userItem.name}</span>
+                              <span className="text-xs text-muted-foreground">{userItem.email}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
+                            title="Click to copy User ID"
+                            className="font-mono text-xs text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-1 rounded border border-purple-500/20 inline-flex items-center gap-1.5 transition-colors cursor-pointer group/copy"
+                          >
+                            <span>{userItem.id}</span>
+                            <Copy className="size-3 opacity-60 group-hover/copy:opacity-100 transition-opacity" />
+                          </button>
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          {userItem.role === UserRole.Admin ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[11px] font-bold border border-purple-500/30 uppercase tracking-wider">
+                              <Crown className="size-3 text-amber-400" /> Admin
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 uppercase tracking-wider">
+                              <UserCheck className="size-3 text-emerald-400" /> User
+                            </span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="py-3">
+                          {userItem.emailVerified ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                              <CheckCircle2 className="size-4" /> Yes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                              <XCircle className="size-4 text-muted-foreground/60" /> No
+                            </span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="py-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-3.5 text-muted-foreground/70" /> {createdDate}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="py-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedUserId(isExpanded ? null : userItem.id)}
+                            className="h-8 text-xs gap-1 text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 cursor-pointer"
+                          >
+                            <Info className="size-3.5" />
+                            <span>{isExpanded ? 'Hide' : 'Full Info'}</span>
+                            {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expanded details view */}
+                      {isExpanded && (
+                        <TableRow className="bg-secondary/20 border-b border-border/60 hover:bg-secondary/20">
+                          <TableCell colSpan={6} className="p-3 sm:p-6 max-w-full whitespace-normal">
+                            <div className="space-y-4 bg-background/60 p-3 sm:p-4 rounded-xl border border-border/70 max-w-full overflow-hidden">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                                <Key className="size-4" /> User Object Data
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-muted-foreground block text-[11px]">ID (Primary Key):</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCopyToClipboard(userItem.id, 'User ID')}
+                                      className="text-[10px] text-purple-300 hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Copy className="size-2.5" /> Copy
+                                    </button>
+                                  </div>
+                                  <span className="font-mono text-foreground font-semibold break-all select-all">{userItem.id}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
+                                  <span className="text-muted-foreground block text-[11px]">Full Name:</span>
+                                  <span className="text-foreground font-semibold break-words">{userItem.name}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1 overflow-hidden">
+                                  <span className="text-muted-foreground block text-[11px]">Email Address:</span>
+                                  <span className="text-foreground font-semibold break-all">{userItem.email}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <span className="text-muted-foreground block text-[11px]">Assigned Role:</span>
+                                  <span className="text-purple-300 font-semibold">{userItem.role}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <span className="text-muted-foreground block text-[11px]">Registration Date:</span>
+                                  <span className="text-foreground font-semibold">{userItem.createdAt}</span>
+                                </div>
+                                <div className="p-2.5 rounded-lg bg-secondary/40 border border-border/40 space-y-1">
+                                  <span className="text-muted-foreground block text-[11px]">Last Updated:</span>
+                                  <span className="text-foreground font-semibold">{userItem.updatedAt}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1 pt-1 max-w-full">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] text-muted-foreground font-semibold">RAW JSON output:</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleCopyToClipboard(JSON.stringify(userItem, null, 2), 'User JSON')}
+                                    className="h-6 text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 gap-1 px-2 cursor-pointer"
+                                  >
+                                    <Copy className="size-3" /> Copy JSON
+                                  </Button>
+                                </div>
+                                <pre className="p-3 rounded-lg bg-black/40 border border-border/50 text-[11px] font-mono text-emerald-400 overflow-x-auto max-w-full whitespace-pre">
+                                  {JSON.stringify(userItem, null, 2)}
+                                </pre>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+
+          {/* Pagination Controls Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-border/60 bg-secondary/25">
+            <div className="text-xs text-muted-foreground text-center sm:text-left">
+              Showing <span className="font-semibold text-foreground">{startRecordIndex}</span> to{' '}
+              <span className="font-semibold text-foreground">{endRecordIndex}</span> of{' '}
+              <span className="font-semibold text-foreground">{totalUsers}</span> accounts
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1 || isUsersLoading}
+                className="h-8 px-2.5 sm:px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
+              >
+                <ChevronLeft className="size-3.5 mr-1" /> Previous
+              </Button>
+
+              <div className="flex items-center gap-1 px-1 sm:px-2 text-xs font-semibold text-purple-300">
+                <span>Page</span>
+                <span className="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-500/30 text-purple-200">
+                  {currentPage}
+                </span>
+                <span>of {paginationMeta.totalPages || 1}</span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= paginationMeta.totalPages || isUsersLoading}
+                className="h-8 px-2.5 sm:px-3 text-xs border-border hover:bg-secondary cursor-pointer disabled:opacity-50"
+              >
+                Next <ChevronRight className="size-3.5 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

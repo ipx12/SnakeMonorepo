@@ -21,6 +21,10 @@ vi.mock('@/lib/auth-client', () => ({
   signOut: vi.fn(),
 }));
 
+vi.mock('@/lib/auth-server', () => ({
+  getServerSession: vi.fn().mockResolvedValue({ user: null, session: null }),
+}));
+
 import HomePage from '../app/page';
 import LoginPage from '../app/login/page';
 import RegisterPage from '../app/register/page';
@@ -43,7 +47,8 @@ describe('App Router Pages Routing', () => {
   });
 
   it('should render the Admin Users page component without crashing', async () => {
-    render(<AdminUsersPage />);
+    const Component = await AdminUsersPage();
+    render(Component);
     expect(await screen.findByText(/Access Restricted/i)).toBeInTheDocument();
   });
 });
