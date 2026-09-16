@@ -110,6 +110,14 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Server-Side Rendering (SSR) Prefetching**: Server Components (`app/page.tsx`, `app/admin/users/page.tsx`) execute prefetching with an isolated `new QueryClient()` instance per component (as officially recommended by TanStack to avoid query cross-serialization bloat) via `await queryClient.query({ queryKey, queryFn }).catch(noop)` with `<HydrationBoundary state={dehydrate(queryClient)}>`.
 - **Session Cache Isolation**: `queryClient.clear()` is invoked on logout in [`Navbar.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/Navbar.tsx) to prevent cross-session cache persistence.
 
+### 10. Containerization & Docker Orchestration
+
+- **Docker Compose Stack**: Root [`docker-compose.yml`](file:///d:/WEB/SnakeMonorepo/docker-compose.yml) orchestrating `snake-web` (port 3000), `snake-api` (port 3001), and a persistent named volume `snake_sqlite_data` mounted at `/app/data`. Uses `init: true` for PID 1 signal management and container healthcheck coordination (`service_healthy`).
+- **API Multi-Stage Build**: [`apps/api/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/api/Dockerfile) based on `node:22-alpine` with an unprivileged system user `expressjs`, preconfigured for `DATABASE_URL=file:/app/data/sqlite.db`. Includes `/api/health` endpoint and `SIGTERM`/`SIGINT` graceful shutdown handlers.
+- **Web Multi-Stage Build**: [`apps/web/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/web/Dockerfile) based on `node:22-alpine` utilizing Next.js `output: 'standalone'` mode (reducing image footprint to ~150MB) and unprivileged `nextjs` system user. Injects `INTERNAL_API_URL` during build stage for static rewrite baking.
+- **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`), SSR prefetching (`serverFetch`), and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
+- **Deployment Documentation**: Complete guide in [`docs/guides/docker-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/docker-deployment.md).
+
 ## AGENTS.md Maintenance Policy
 
 1. **Automated Documentation**: Whenever new technologies, routes, endpoints, or features are added or updated in the project, `AGENTS.md` must be updated to document them.

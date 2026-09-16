@@ -23,7 +23,9 @@ export async function serverFetch<T>(endpoint: string, options: ServerFetchOptio
   const origin = nextHeaders.get('origin') || (host ? `http://${host}` : '');
   if (origin) fetchHeaders.set('origin', origin);
   
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const apiUrl = process.env.INTERNAL_API_URL
+    ? `${process.env.INTERNAL_API_URL}/api`
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
   
   const timeoutSignal = AbortSignal.timeout(5000);
   const combinedSignal = options.signal

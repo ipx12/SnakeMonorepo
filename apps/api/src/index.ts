@@ -27,6 +27,11 @@ app.all('/api/auth/*', toNodeHandler(auth));
 app.use(express.json());
 app.use(cookieParser());
 
+// Health check endpoint for container readiness and liveness probes
+app.get('/api/health', (_httpRequest: Request, httpResponse: Response) => {
+  httpResponse.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Application API Routers
 app.use('/api/tasks', taskRouter);
 app.use('/api/admin', adminRouter);
@@ -41,9 +46,20 @@ app.use((unhandledError: any, _httpRequest: Request, httpResponse: Response, _ne
 
 if (process.env.NODE_ENV !== 'test') {
   initDb().then(() => {
-    app.listen(PORT, () => {
+    const apiServer = app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
+
+    const gracefulShutdownHandler = (signalName: string) => {
+      console.log(`[API] Received ${signalName}, shutting down gracefully...`);
+      apiServer.close(() => {
+        console.log('[API] HTTP server closed.');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => gracefulShutdownHandler('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdownHandler('SIGINT'));
   });
 }
 

@@ -5,7 +5,7 @@ import { DatabaseSchema } from '@snake/types';
 
 export const db = new Kysely<DatabaseSchema>({
   dialect: new LibsqlDialect({
-    url: 'file:sqlite.db',
+    url: process.env.DATABASE_URL || 'file:sqlite.db',
   }),
 });
 
@@ -29,7 +29,9 @@ export const auth = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET || 'default_secret_key_change_in_production_123',
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
-  trustedOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  trustedOrigins: process.env.FRONTEND_URL
+    ? [process.env.FRONTEND_URL, 'http://localhost:3000', 'http://127.0.0.1:3000']
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
 });
 
 // Auto-initialize required Better Auth tables and seed demo user in SQLite

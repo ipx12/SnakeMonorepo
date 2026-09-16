@@ -22,7 +22,9 @@ export async function getServerSession(): Promise<{ user: User | null; session: 
     const origin = nextHeaders.get('origin') || `http://${host}`;
     if (origin) fetchHeaders.set('origin', origin);
     
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const apiUrl = process.env.INTERNAL_API_URL
+      ? `${process.env.INTERNAL_API_URL}/api`
+      : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
     
     // Call the better-auth backend get-session endpoint
     const response = await fetch(`${apiUrl}/auth/get-session`, {
