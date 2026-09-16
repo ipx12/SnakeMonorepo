@@ -1,30 +1,36 @@
-# Multi-stage Dockerfile for Next.js web service in SnakeMonorepo
+# Multi-stage Dockerfile for Next.js web service in SnakeMonorepo (Turborepo Pruned)
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Stage 1: Install dependencies
-FROM base AS deps
-COPY package.json package-lock.json ./
-COPY packages/types/package.json ./packages/types/package.json
-COPY apps/api/package.json ./apps/api/package.json
-COPY apps/web/package.json ./apps/web/package.json
+# Stage 1: Prune workspace
+FROM base AS pruner
+# Install turbo globally to use the prune command
+RUN npm install -g turbo@^2
+COPY . .
+RUN turbo prune web --docker
 
+# Stage 2: Install dependencies
+FROM base AS installer
+# Copy only the pruned package.json files and lockfile
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
 RUN npm ci
 
-# Stage 2: Build the Next.js application
+# Stage 3: Build the Next.js application
 FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json turbo.json ./
-COPY packages/types ./packages/types
-COPY apps/web ./apps/web
+COPY --from=installer /app/node_modules ./node_modules
+# Copy the pruned source code
+COPY --from=pruner /app/out/full/ .
 
+ARG INTERNAL_API_URL=http://api:3001
+ENV INTERNAL_API_URL=$INTERNAL_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
 RUN npm run build --workspace=web
 
-# Stage 3: Production runner using Next.js standalone mode
+# Stage 4: Production runner using Next.js standalone mode
 FROM base AS runner
 WORKDIR /app
 

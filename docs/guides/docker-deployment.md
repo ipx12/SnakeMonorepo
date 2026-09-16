@@ -61,10 +61,19 @@ You can override defaults by creating a `.env` file in the monorepo root or spec
 | `PORT` (API) | `3001` | Port inside the API container |
 | `DATABASE_URL` | `file:/app/data/sqlite.db` | Absolute path to SQLite database inside volume |
 | `BETTER_AUTH_SECRET` | *(random demo secret)* | Secret key for Better Auth token encryption (change for production) |
-| `BETTER_AUTH_URL` | `http://localhost:3001` | Base URL for Better Auth authentication endpoints |
+| `BETTER_AUTH_URL` | `http://localhost:3000` | Application root URL for Better Auth authentication callbacks |
 | `FRONTEND_URL` | `http://localhost:3000` | Allowed CORS origin for client requests |
 | `INTERNAL_API_URL` | `http://api:3001` | Server-to-server URL used by Next.js SSR and rewrites |
 | `NEXT_PUBLIC_API_URL`| `http://localhost:3001/api` | Public API URL accessed by client browsers |
+| `NEXT_PUBLIC_AUTH_URL`| *(window.location.origin)* | Client authentication endpoint URL |
+
+---
+
+## 5. Reliability, Healthchecks & Graceful Shutdown
+
+- **Healthcheck & Boot Coordination**: `api` container exposes `GET /api/health`. Docker Compose uses `condition: service_healthy` so `web` only accepts requests after database tables, indices, and demo users are fully seeded.
+- **Process Init & Signal Forwarding**: Both containers run with `init: true` (Docker Tini integration) to reap zombie processes and guarantee PID 1 signal forwarding.
+- **Graceful Shutdown**: Express server captures `SIGTERM` and `SIGINT` to cleanly close open connections and flush SQLite WAL logs without file corruption.
 
 ---
 

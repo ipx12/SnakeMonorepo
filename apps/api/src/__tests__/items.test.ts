@@ -80,6 +80,13 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     await db.destroy();
   });
 
+  it('should return 200 OK with status ok on GET /api/health', async () => {
+    const healthResponse = await request(app).get('/api/health');
+    expect(healthResponse.status).toBe(200);
+    expect(healthResponse.body.status).toBe('ok');
+    expect(healthResponse.body).toHaveProperty('timestamp');
+  });
+
   it('should return 401 Unauthorized for unauthenticated GET /api/tasks', async () => {
     const response = await request(app).get('/api/tasks');
     expect(response.status).toBe(401);

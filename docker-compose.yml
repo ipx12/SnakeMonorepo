@@ -5,6 +5,7 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: snake-api
     restart: unless-stopped
+    init: true
     ports:
       - "3001:3001"
     environment:
@@ -12,8 +13,14 @@ services:
       - PORT=3001
       - DATABASE_URL=file:/app/data/sqlite.db
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-snake_super_secret_key_change_in_production_123}
-      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3001}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     volumes:
       - sqlite_data:/app/data
 
@@ -21,8 +28,11 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        INTERNAL_API_URL: http://api:3001
     container_name: snake-web
     restart: unless-stopped
+    init: true
     ports:
       - "3000:3000"
     environment:
@@ -31,7 +41,8 @@ services:
       - INTERNAL_API_URL=http://api:3001
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   sqlite_data:

@@ -112,10 +112,10 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 ### 10. Containerization & Docker Orchestration
 
-- **Docker Compose Stack**: Root [`docker-compose.yml`](file:///d:/WEB/SnakeMonorepo/docker-compose.yml) orchestrating `snake-web` (port 3000), `snake-api` (port 3001), and a persistent named volume `snake_sqlite_data` mounted at `/app/data`.
-- **API Multi-Stage Build**: [`apps/api/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/api/Dockerfile) based on `node:22-alpine` with an unprivileged system user `expressjs`, preconfigured for `DATABASE_URL=file:/app/data/sqlite.db`.
-- **Web Multi-Stage Build**: [`apps/web/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/web/Dockerfile) based on `node:22-alpine` utilizing Next.js `output: 'standalone'` mode (reducing image footprint to ~150MB) and unprivileged `nextjs` system user.
-- **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`) and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
+- **Docker Compose Stack**: Root [`docker-compose.yml`](file:///d:/WEB/SnakeMonorepo/docker-compose.yml) orchestrating `snake-web` (port 3000), `snake-api` (port 3001), and a persistent named volume `snake_sqlite_data` mounted at `/app/data`. Uses `init: true` for PID 1 signal management and container healthcheck coordination (`service_healthy`).
+- **API Multi-Stage Build**: [`apps/api/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/api/Dockerfile) based on `node:22-alpine` with an unprivileged system user `expressjs`, preconfigured for `DATABASE_URL=file:/app/data/sqlite.db`. Includes `/api/health` endpoint and `SIGTERM`/`SIGINT` graceful shutdown handlers.
+- **Web Multi-Stage Build**: [`apps/web/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/web/Dockerfile) based on `node:22-alpine` utilizing Next.js `output: 'standalone'` mode (reducing image footprint to ~150MB) and unprivileged `nextjs` system user. Injects `INTERNAL_API_URL` during build stage for static rewrite baking.
+- **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`), SSR prefetching (`serverFetch`), and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
 - **Deployment Documentation**: Complete guide in [`docs/guides/docker-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/docker-deployment.md).
 
 ## AGENTS.md Maintenance Policy
