@@ -2,7 +2,16 @@
 
 The application utilizes **SQLite (`file:sqlite.db`)** paired with the type-safe **Kysely** query builder and the **LibSQL dialect (`@libsql/kysely-libsql`)**. It is configured with `WAL` journal mode and `busy_timeout` to prevent database locking during concurrent reads/writes.
 
+Database migrations and schema evolution are managed via the official **Kysely Migrator** (`apps/api/src/migrator.ts`) using versioned migration files in `apps/api/src/migrations/`.
+
 ---
+
+## Migrations & CLI Tooling
+
+* **Migration runner**: `npm run db:migrate` (applies pending migrations to latest via `tsx src/scripts/migrate.ts up`).
+* **Rollback runner**: `npm run db:migrate:down` (reverts the latest migration).
+* **Database seeding**: `npm run db:seed` (seeds default demo administrator account `demo@watermelon.ui` via `tsx src/scripts/seed.ts`).
+* **Initial Migration**: [`001_initial_schema.ts`](file:///d:/WEB/SnakeMonorepo/apps/api/src/migrations/001_initial_schema.ts) sets up `user`, `session`, `account`, `verification`, and `task` tables along with performance indices.
 
 ## Database Tables
 
