@@ -54,10 +54,12 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
   - **Services (`src/services/`)**: Business logic and database operations (`task.service.ts`, `admin.service.ts`).
   - **Middlewares (`src/middlewares/`)**: Reusable auth and validation handlers (`auth.middleware.ts`, `validate.middleware.ts`).
 - **Shared Types & Schemas (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces (`DatabaseSchema`), enums (`UserRole`), Zod schemas, API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
-- **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`), configured with `WAL` journal mode and `busy_timeout` to prevent locking.
+- **Database & Migrations**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`), configured with `WAL` journal mode and `busy_timeout` to prevent locking. Managed via **Kysely Migrator** (`apps/api/src/migrator.ts`) with versioned migration files in `apps/api/src/migrations/` (`001_initial_schema.ts`) and separate seeding (`apps/api/src/seed.ts`). NPM scripts: `db:migrate`, `db:migrate:down`, `db:seed`.
 - **Database Schema & Indices**:
-  - `user`: User account details (`id`, `name`, `email`, `role`, `createdAt`, `updatedAt`).
+  - `user`: User account details (`id`, `name`, `email`, `emailVerified`, `image`, `role`, `createdAt`, `updatedAt`).
   - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`). Index: `idx_session_userId` on `session(userId)`.
+  - `account`: User authentication credentials and provider tokens (`id`, `accountId`, `providerId`, `userId`, `password`, `createdAt`, `updatedAt`).
+  - `verification`: Better Auth token verifications (`id`, `identifier`, `value`, `expiresAt`).
   - `task`: User task dashboard items (`id`, `title`, `description`, `completed`, `userId`, `createdAt`). Index: `idx_task_userId` on `task(userId)`.
 - **Query Optimization**: Secure `crypto.randomUUID()` identifier generation, and SQL-level server-side pagination & filtering for `/api/admin/users`.
 
@@ -70,7 +72,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **UI Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests.
 - **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
 - **Admin UI Component Testing**: Integration tests in [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx) testing access controls, stats cards, user rows, search filtering, and pagination navigation.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 64 unit & integration tests across workspaces (17 in `apps/api`, 47 in `apps/web`).
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 65 unit & integration tests across workspaces (18 in `apps/api`, 47 in `apps/web`).
 
 ### 6. Directory Structure Conventions
 
@@ -78,9 +80,11 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - `apps/web/src/components/`: Visual UI components:
   - `components/ui/`: Watermelon UI design primitives (`Button`, `Input`, `Table`, etc.).
   - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)).
-  - `components/admin/`: Admin user management view ([`AdminUsersContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/admin/AdminUsersContainer.tsx)).
+  - `components/admin/`: Modular admin user management view: orchestrator ([`AdminUsersContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/admin/AdminUsersContainer.tsx)), header (`AdminHeader.tsx`), metric cards (`AdminStatsGrid.tsx`), search/page-size toolbar (`AdminUsersToolbar.tsx`), table view (`AdminUsersTable.tsx`), row component (`AdminUserRow.tsx`), expanded metadata/JSON viewer (`AdminUserDetails.tsx`), pagination bar (`AdminPagination.tsx`), access denied guard (`AccessDeniedCard.tsx`), and loading skeleton (`AdminLoadingSkeleton.tsx`).
   - `components/auth/`: Interactive client authentication forms ([`LoginForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/LoginForm.tsx), [`RegisterForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/RegisterForm.tsx)).
 - `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.
+- `apps/api/src/migrations/`: Versioned database migration definitions (`001_initial_schema.ts`).
+- `apps/api/src/scripts/`: Database management CLI scripts (`migrate.ts`, `seed.ts`).
 - `apps/api/src/controllers/`: Express route controllers.
 - `apps/api/src/services/`: Database and business logic operations.
 - `apps/api/src/routes/`: Express modular route definitions.
