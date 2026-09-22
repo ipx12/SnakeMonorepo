@@ -1,48 +1,43 @@
-import type { Request, Response, NextFunction } from 'express';
-import { fromNodeHeaders } from 'better-auth/node';
+import { createMiddleware } from 'hono/factory';
 import { auth } from '../auth';
 import { UserRole } from '@snake/types';
 
-export interface AuthenticatedRequest extends Request {
-  userSession?: NonNullable<Awaited<ReturnType<typeof getAuthSession>>>;
-}
+export type UserSession = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 
-export const getAuthSession = async (httpRequest: Request) => {
-  try {
-    return await auth.api.getSession({
-      headers: fromNodeHeaders(httpRequest.headers),
-    });
-  } catch {
-    return null;
+export const requireAuth = createMiddleware<{ Variables: { userSession: UserSession } }>(
+  async (c, next) => {
+    try {
+      const session = await auth.api.getSession({
+        headers: c.req.raw.headers,
+      });
+      if (!session?.user) {
+        return c.json({ message: 'Authentication required. Please sign in.' }, 401);
+      }
+      c.set('userSession', session);
+      await next();
+    } catch {
+      return c.json({ message: 'Authentication required. Please sign in.' }, 401);
+    }
   }
-};
+);
 
-export const requireAuth = async (
-  httpRequest: AuthenticatedRequest,
-  httpResponse: Response,
-  nextMiddleware: NextFunction
-) => {
-  const session = await getAuthSession(httpRequest);
-  if (!session?.user) {
-    return httpResponse.status(401).json({ message: 'Authentication required. Please sign in.' });
+export const requireAdmin = createMiddleware<{ Variables: { userSession: UserSession } }>(
+  async (c, next) => {
+    try {
+      const session = await auth.api.getSession({
+        headers: c.req.raw.headers,
+      });
+      if (!session?.user) {
+        return c.json({ message: 'Authentication required. Please sign in.' }, 401);
+      }
+      const userRole = (session.user as { role?: string }).role;
+      if (userRole !== UserRole.Admin) {
+        return c.json({ message: 'Forbidden. Admin access required.' }, 403);
+      }
+      c.set('userSession', session);
+      await next();
+    } catch {
+      return c.json({ message: 'Authentication required. Please sign in.' }, 401);
+    }
   }
-  httpRequest.userSession = session;
-  nextMiddleware();
-};
-
-export const requireAdmin = async (
-  httpRequest: AuthenticatedRequest,
-  httpResponse: Response,
-  nextMiddleware: NextFunction
-) => {
-  const session = await getAuthSession(httpRequest);
-  if (!session?.user) {
-    return httpResponse.status(401).json({ message: 'Authentication required. Please sign in.' });
-  }
-  const userRole = (session.user as { role?: string }).role;
-  if (userRole !== UserRole.Admin) {
-    return httpResponse.status(403).json({ message: 'Forbidden. Admin access required.' });
-  }
-  httpRequest.userSession = session;
-  nextMiddleware();
-};
+);

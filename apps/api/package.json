@@ -14,20 +14,17 @@
     "db:seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "@hono/zod-validator": "^0.9.1",
     "@libsql/client": "^0.17.4",
     "@libsql/kysely-libsql": "^0.4.1",
-    "better-auth": "^1.6.25",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
     "@snake/types": "*",
-    "express": "^4.19.2",
+    "better-auth": "^1.6.25",
+    "dotenv": "^16.4.5",
+    "hono": "^4.13.8",
     "kysely": "^0.29.4"
   },
   "devDependencies": {
-    "@types/cookie-parser": "^1.4.10",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
     "@types/node": "^20.14.9",
     "@types/supertest": "^7.2.1",
     "rimraf": "^5.0.7",

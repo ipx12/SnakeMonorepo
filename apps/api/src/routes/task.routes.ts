@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { createTaskSchema, updateTaskSchema, taskIdParamSchema } from '@snake/types';
 import { requireAuth } from '../middlewares/auth.middleware';
 import { validateRequestBody, validateRequestParams } from '../middlewares/validate.middleware';
@@ -10,20 +10,23 @@ import {
   deleteTaskHandler,
 } from '../controllers/task.controller';
 
-const taskRouter = Router();
+const taskRouter = new Hono();
 
-// All task routes require authentication
-taskRouter.use(requireAuth);
+taskRouter.use('*', requireAuth);
 
 taskRouter.get('/', getTasksHandler);
+
 taskRouter.get('/:id', validateRequestParams(taskIdParamSchema), getTaskByIdHandler);
+
 taskRouter.post('/', validateRequestBody(createTaskSchema), createTaskHandler);
+
 taskRouter.put(
   '/:id',
   validateRequestParams(taskIdParamSchema),
   validateRequestBody(updateTaskSchema),
   updateTaskHandler
 );
+
 taskRouter.delete('/:id', validateRequestParams(taskIdParamSchema), deleteTaskHandler);
 
 export { taskRouter };

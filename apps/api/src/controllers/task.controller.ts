@@ -1,87 +1,99 @@
-import type { Response } from 'express';
+import { Context } from 'hono';
 import { UserRole } from '@snake/types';
-import type { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import type { UserSession } from '../middlewares/auth.middleware';
 import * as taskService from '../services/task.service';
 
-export const getTasksHandler = async (httpRequest: AuthenticatedRequest, httpResponse: Response) => {
-  const userId = httpRequest.userSession!.user.id;
-  const userRole = (httpRequest.userSession!.user as { role?: string }).role || UserRole.User;
+export const getTasksHandler = async (c: Context) => {
+  const session = c.get('userSession') as UserSession;
+  const userId = session.user.id;
+  const userRole = (session.user as { role?: string }).role || UserRole.User;
   try {
     const userTasks = await taskService.getTasksForUser(userId, userRole);
-    httpResponse.json(userTasks);
+    return c.json(userTasks);
   } catch (caughtError: any) {
-    httpResponse.status(500).json({ message: 'Failed to fetch tasks', error: caughtError.message });
+    return c.json({ message: 'Failed to fetch tasks', error: caughtError.message }, 500);
   }
 };
 
-export const getTaskByIdHandler = async (httpRequest: AuthenticatedRequest, httpResponse: Response) => {
-  const taskId = httpRequest.params.id;
+export const getTaskByIdHandler = async (c: Context) => {
+  const taskId = c.req.param('id');
   try {
     const foundTask = await taskService.getTaskById(taskId);
     if (!foundTask) {
-      return httpResponse.status(404).json({ message: 'Task not found' });
+      return c.json({ message: 'Task not found' }, 404);
     }
 
-    const currentUserId = httpRequest.userSession!.user.id;
-    const userRole = (httpRequest.userSession!.user as { role?: string }).role;
+    const session = c.get('userSession') as UserSession;
+    const currentUserId = session.user.id;
+    const userRole = (session.user as { role?: string }).role;
+    
     if (foundTask.userId !== currentUserId && userRole !== UserRole.Admin) {
-      return httpResponse.status(403).json({ message: 'Forbidden' });
+      return c.json({ message: 'Forbidden' }, 403);
     }
 
-    httpResponse.json(foundTask);
+    return c.json(foundTask);
   } catch (caughtError: any) {
-    httpResponse.status(500).json({ message: 'Failed to fetch task', error: caughtError.message });
+    return c.json({ message: 'Failed to fetch task', error: caughtError.message }, 500);
   }
 };
 
-export const createTaskHandler = async (httpRequest: AuthenticatedRequest, httpResponse: Response) => {
-  const currentUserId = httpRequest.userSession!.user.id;
+export const createTaskHandler = async (c: Context) => {
+  const session = c.get('userSession') as UserSession;
+  const currentUserId = session.user.id;
+  const body = c.req.valid('json' as never); // Types handled by zValidator on the route
+  
   try {
-    const createdTask = await taskService.createTask(currentUserId, httpRequest.body);
-    httpResponse.status(201).json(createdTask);
+    const createdTask = await taskService.createTask(currentUserId, body as any);
+    return c.json(createdTask, 201);
   } catch (caughtError: any) {
-    httpResponse.status(500).json({ message: 'Failed to create task', error: caughtError.message });
+    return c.json({ message: 'Failed to create task', error: caughtError.message }, 500);
   }
 };
 
-export const updateTaskHandler = async (httpRequest: AuthenticatedRequest, httpResponse: Response) => {
-  const taskId = httpRequest.params.id;
-  try {
-    const existingTask = await taskService.getTaskById(taskId);
-    if (!existingTask) {
-      return httpResponse.status(404).json({ message: 'Task not found' });
-    }
-
-    const currentUserId = httpRequest.userSession!.user.id;
-    const userRole = (httpRequest.userSession!.user as { role?: string }).role;
-    if (existingTask.userId !== currentUserId && userRole !== UserRole.Admin) {
-      return httpResponse.status(403).json({ message: 'Forbidden' });
-    }
-
-    const updatedTask = await taskService.updateTask(existingTask, httpRequest.body);
-    httpResponse.json(updatedTask);
-  } catch (caughtError: any) {
-    httpResponse.status(500).json({ message: 'Failed to update task', error: caughtError.message });
-  }
-};
-
-export const deleteTaskHandler = async (httpRequest: AuthenticatedRequest, httpResponse: Response) => {
-  const taskId = httpRequest.params.id;
+export const updateTaskHandler = async (c: Context) => {
+  const taskId = c.req.param('id');
+  const body = c.req.valid('json' as never);
+  
   try {
     const existingTask = await taskService.getTaskById(taskId);
     if (!existingTask) {
-      return httpResponse.status(404).json({ message: 'Task not found' });
+      return c.json({ message: 'Task not found' }, 404);
     }
 
-    const currentUserId = httpRequest.userSession!.user.id;
-    const userRole = (httpRequest.userSession!.user as { role?: string }).role;
+    const session = c.get('userSession') as UserSession;
+    const currentUserId = session.user.id;
+    const userRole = (session.user as { role?: string }).role;
+    
     if (existingTask.userId !== currentUserId && userRole !== UserRole.Admin) {
-      return httpResponse.status(403).json({ message: 'Forbidden' });
+      return c.json({ message: 'Forbidden' }, 403);
+    }
+
+    const updatedTask = await taskService.updateTask(existingTask, body as any);
+    return c.json(updatedTask);
+  } catch (caughtError: any) {
+    return c.json({ message: 'Failed to update task', error: caughtError.message }, 500);
+  }
+};
+
+export const deleteTaskHandler = async (c: Context) => {
+  const taskId = c.req.param('id');
+  try {
+    const existingTask = await taskService.getTaskById(taskId);
+    if (!existingTask) {
+      return c.json({ message: 'Task not found' }, 404);
+    }
+
+    const session = c.get('userSession') as UserSession;
+    const currentUserId = session.user.id;
+    const userRole = (session.user as { role?: string }).role;
+    
+    if (existingTask.userId !== currentUserId && userRole !== UserRole.Admin) {
+      return c.json({ message: 'Forbidden' }, 403);
     }
 
     await taskService.deleteTask(taskId);
-    httpResponse.json(existingTask);
+    return c.json(existingTask);
   } catch (caughtError: any) {
-    httpResponse.status(500).json({ message: 'Failed to delete task', error: caughtError.message });
+    return c.json({ message: 'Failed to delete task', error: caughtError.message }, 500);
   }
 };
