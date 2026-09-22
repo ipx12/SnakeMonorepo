@@ -9,7 +9,7 @@ SnakeMonorepo provides a production-ready, multi-stage Docker setup orchestrated
 ```mermaid
 graph TD
     Browser[Client Browser] -->|Port 3000| WebContainer[snake-web: Next.js Standalone]
-    Browser -->|Port 3001| ApiContainer[snake-api: Express API]
+    Browser -->|Port 3001| ApiContainer[snake-api: Hono API]
     WebContainer -->|Internal Network http://api:3001| ApiContainer
     ApiContainer -->|Volume: snake_sqlite_data| SqliteDB[(SQLite Database)]
 ```
@@ -18,7 +18,7 @@ graph TD
 
 | Service | Technology | Port | Image Strategy | Storage |
 | :--- | :--- | :--- | :--- | :--- |
-| **`api`** | Express + Better Auth + Kysely | `3001` | Multi-stage Node 22 Alpine, unprivileged `expressjs` user | Docker volume `/app/data` |
+| **`api`** | Hono + Better Auth + Kysely | `3001` | Multi-stage Node 22 Alpine, unprivileged `expressjs` user | Docker volume `/app/data` |
 | **`web`** | Next.js 16 + Tailwind v4 + React 19 | `3000` | Multi-stage Node 22 Alpine, Next.js `standalone` mode | Ephemeral container |
 | **`sqlite_data`** | SQLite persistent volume | N/A | Named volume `snake_sqlite_data` | Persists `sqlite.db` |
 
@@ -73,7 +73,7 @@ You can override defaults by creating a `.env` file in the monorepo root or spec
 
 - **Healthcheck & Boot Coordination**: `api` container exposes `GET /api/health`. Docker Compose uses `condition: service_healthy` so `web` only accepts requests after database tables, indices, and demo users are fully seeded.
 - **Process Init & Signal Forwarding**: Both containers run with `init: true` (Docker Tini integration) to reap zombie processes and guarantee PID 1 signal forwarding.
-- **Graceful Shutdown**: Express server captures `SIGTERM` and `SIGINT` to cleanly close open connections and flush SQLite WAL logs without file corruption.
+- **Graceful Shutdown**: Hono server captures `SIGTERM` and `SIGINT` to cleanly close open connections and flush SQLite WAL logs without file corruption.
 
 ---
 

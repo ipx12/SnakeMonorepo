@@ -10,7 +10,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Project Overview
 
-Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api`).
+Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 
 ## Key Technologies & Conventions
 
@@ -30,7 +30,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 
 - **Auth Provider**: **Better Auth** (`better-auth`).
 - **Frontend Client**: `authClient` from [`src/lib/auth-client.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-client.ts) consumed via native hooks (`useSession`, `signIn`, `signUp`).
-- **Backend Auth Endpoint**: Express API mounted at `http://localhost:3001/api/auth/*`.
+- **Backend Auth Endpoint**: Hono API mounted at `http://localhost:3001/api/auth/*`.
 - **Default Demo Account**: `demo@watermelon.ui` / `password123`.
 - **Role-Based Access Control (RBAC)**: User roles defined in [`src/lib/roles.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/roles.ts) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`).
 - **Admin Dashboard**: Route `/admin/users` for administrators to view, search, and manage user accounts and session details.
@@ -42,13 +42,13 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - **Form State Management**: **React Hook Form** (`react-hook-form`).
 - **Schema Validation**: **Zod** (`zod`).
 - **Shared Validation Schemas**: Centralized in `@snake/types` (`loginSchema`, `registerSchema`, `createTaskSchema`, `updateTaskSchema`, `taskIdParamSchema`, `adminUsersQuerySchema`).
-- **Backend Request Validation**: Express middleware (`validateRequestBody`, `validateRequestQuery`, `validateRequestParams`) leveraging shared Zod schemas.
+- **Backend Request Validation**: Hono validation middleware (`validateRequestBody`, `validateRequestQuery`, `validateRequestParams` wrapping `@hono/zod-validator`) leveraging shared Zod schemas.
 - **Frontend Schema Resolver**: `@hookform/resolvers/zod` (`zodResolver`).
 
 ### 4. Monorepo Architecture, Database & Optimization
 
 - **Frontend (`apps/web`)**: Next.js App Router on Port 3000 with Optimistic UI updates and Debounced Search.
-- **Backend (`apps/api`)**: Layered Express server on Port 3001:
+- **Backend (`apps/api`)**: Layered Hono server on Port 3001:
   - **Routes (`src/routes/`)**: Route definitions and middleware binding (`task.routes.ts`, `admin.routes.ts`).
   - **Controllers (`src/controllers/`)**: HTTP request/response handlers (`task.controller.ts`, `admin.controller.ts`).
   - **Services (`src/services/`)**: Business logic and database operations (`task.service.ts`, `admin.service.ts`).
@@ -66,7 +66,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 ### 5. Testing Infrastructure & Strategy
 
 - **Test Runner**: **Vitest** for both `apps/web` and `apps/api`.
-- **API Integration Testing**: **Supertest** for testing Express endpoints in `apps/api` without running network ports (`items.test.ts`).
+- **API Integration Testing**: **Supertest** for testing Hono endpoints in `apps/api` without running network ports using `@hono/node-server` (`items.test.ts`).
 - **Service Layer Unit Testing**: Direct database and business logic testing in `apps/api/src/__tests__/services.test.ts`.
 - **Zod Schema Unit Testing**: Validation edge cases testing in `apps/web/src/__tests__/schemas.test.ts`.
 - **UI Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests.
@@ -85,10 +85,10 @@ Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api
 - `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.
 - `apps/api/src/migrations/`: Versioned database migration definitions (`001_initial_schema.ts`).
 - `apps/api/src/scripts/`: Database management CLI scripts (`migrate.ts`, `seed.ts`).
-- `apps/api/src/controllers/`: Express route controllers.
+- `apps/api/src/controllers/`: Hono route controllers.
 - `apps/api/src/services/`: Database and business logic operations.
-- `apps/api/src/routes/`: Express modular route definitions.
-- `apps/api/src/middlewares/`: Express authentication and validation middlewares.
+- `apps/api/src/routes/`: Hono modular route definitions.
+- `apps/api/src/middlewares/`: Hono authentication and validation middlewares.
 - `packages/types/`: Shared TypeScript models, interfaces, and Zod schemas (`@snake/types`).
 
 ### 7. Code Naming Conventions

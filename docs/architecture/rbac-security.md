@@ -29,7 +29,7 @@ Defined centrally in `@snake/types`:
 
 ---
 
-## Route Protection (Express Middlewares)
+## Route Protection (Hono Middlewares)
 
 Implemented in [`apps/api/src/middlewares/auth.middleware.ts`](file:///d:/WEB/SnakeMonorepo/apps/api/src/middlewares/auth.middleware.ts):
 
@@ -49,7 +49,7 @@ To prevent unauthorized bundle exposure and layout flashing (Zero Layout Flash),
 
 ### Implementation:
 1. **Server Session Helper (`apps/web/src/lib/auth-server.ts`)**:
-   - Uses Next.js `cookies()` and `headers()` to forward authentication headers to Express `GET /api/auth/get-session`.
+   - Uses Next.js `cookies()` and `headers()` to forward authentication headers to Hono `GET /api/auth/get-session`.
    - Employs `cache: 'no-store'` to prevent caching user sessions across requests.
    - Enforces an `AbortSignal.timeout(5000)` safeguard to prevent SSR hanging on backend delays.
 2. **Page Authorization (`apps/web/src/app/admin/users/page.tsx`)**:

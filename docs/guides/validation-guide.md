@@ -1,6 +1,6 @@
 # 🛡️ End-to-End Zod Validation Guide
 
-The monorepo implements a unified, end-to-end data validation architecture: centralized Zod schemas in `@snake/types` are shared across frontend forms and backend Express API middlewares.
+The monorepo implements a unified, end-to-end data validation architecture: centralized Zod schemas in `@snake/types` are shared across frontend forms and backend Hono API middlewares.
 
 ---
 
@@ -41,14 +41,14 @@ const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormDa
 
 ---
 
-## 3. Backend Usage (Express Middleware)
+## 3. Backend Usage (Hono Middleware)
 
 ```typescript
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { createTaskSchema } from '@snake/types';
 import { validateRequestBody } from '../middlewares/validate.middleware';
 import { createTaskHandler } from '../controllers/task.controller';
 
-const taskRouter = Router();
+const taskRouter = new Hono();
 taskRouter.post('/', validateRequestBody(createTaskSchema), createTaskHandler);
 ```

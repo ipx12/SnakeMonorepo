@@ -59,7 +59,7 @@ describe('App Router Pages Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetServerSession.mockResolvedValue({ user: null, session: null });
-    (useSession as any).mockReturnValue({ data: null, isPending: false });
+    vi.mocked(useSession).mockReturnValue({ data: null, isPending: false } as unknown as ReturnType<typeof useSession>);
   });
 
   describe('Unauthenticated State', () => {
@@ -86,7 +86,7 @@ describe('App Router Pages Integration Tests', () => {
 
     beforeEach(() => {
       mockGetServerSession.mockResolvedValue({ user: mockUser, session: { id: 'sess-1' } });
-      (useSession as any).mockReturnValue({ data: { user: mockUser }, isPending: false });
+      vi.mocked(useSession).mockReturnValue({ data: { user: mockUser }, isPending: false } as unknown as ReturnType<typeof useSession>);
     });
 
     it('HomePage should render Dashboard and task creation form', async () => {
@@ -116,7 +116,7 @@ describe('App Router Pages Integration Tests', () => {
 
     beforeEach(() => {
       mockGetServerSession.mockResolvedValue({ user: mockAdmin, session: { id: 'sess-2' } });
-      (useSession as any).mockReturnValue({ data: { user: mockAdmin }, isPending: false });
+      vi.mocked(useSession).mockReturnValue({ data: { user: mockAdmin }, isPending: false } as unknown as ReturnType<typeof useSession>);
     });
 
     it('AdminUsersPage should render Admin Users Table and Stats', async () => {

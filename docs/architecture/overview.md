@@ -10,7 +10,7 @@ The project is architected as a modular monorepo orchestrated by **Turborepo** a
 SnakeMonorepo/
 ├── apps/
 │   ├── web/           # Frontend: Next.js App Router (Port 3000)
-│   └── api/           # Backend: Express REST API (Port 3001)
+│   └── api/           # Backend: Hono REST API (Port 3001)
 ├── packages/
 │   └── types/         # Shared: TypeScript models, Zod validation schemas, DTOs
 ├── docs/              # Engineering documentation & guides
