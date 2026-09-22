@@ -17,6 +17,9 @@ export const getTasksHandler = async (c: Context) => {
 
 export const getTaskByIdHandler = async (c: Context) => {
   const taskId = c.req.param('id');
+  if (!taskId) {
+    return c.json({ message: 'Task ID is required' }, 400);
+  }
   try {
     const foundTask = await taskService.getTaskById(taskId);
     if (!foundTask) {
@@ -52,6 +55,9 @@ export const createTaskHandler = async (c: Context) => {
 
 export const updateTaskHandler = async (c: Context) => {
   const taskId = c.req.param('id');
+  if (!taskId) {
+    return c.json({ message: 'Task ID is required' }, 400);
+  }
   const body = c.req.valid('json' as never);
   
   try {
@@ -77,6 +83,9 @@ export const updateTaskHandler = async (c: Context) => {
 
 export const deleteTaskHandler = async (c: Context) => {
   const taskId = c.req.param('id');
+  if (!taskId) {
+    return c.json({ message: 'Task ID is required' }, 400);
+  }
   try {
     const existingTask = await taskService.getTaskById(taskId);
     if (!existingTask) {

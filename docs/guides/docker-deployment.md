@@ -18,7 +18,7 @@ graph TD
 
 | Service | Technology | Port | Image Strategy | Storage |
 | :--- | :--- | :--- | :--- | :--- |
-| **`api`** | Hono + Better Auth + Kysely | `3001` | Multi-stage Node 22 Alpine, unprivileged `expressjs` user | Docker volume `/app/data` |
+| **`api`** | Hono + Better Auth + Kysely | `3001` | Multi-stage Node 22 Alpine, unprivileged `honojs` user | Docker volume `/app/data` |
 | **`web`** | Next.js 16 + Tailwind v4 + React 19 | `3000` | Multi-stage Node 22 Alpine, Next.js `standalone` mode | Ephemeral container |
 | **`sqlite_data`** | SQLite persistent volume | N/A | Named volume `snake_sqlite_data` | Persists `sqlite.db` |
 
