@@ -1,56 +1,25 @@
-import type { Request, Response, NextFunction } from 'express';
-import { ZodError, type ZodSchema } from 'zod';
+import { zValidator } from '@hono/zod-validator';
 
-export const validateRequestBody = (schema: ZodSchema) => {
-  return async (httpRequest: Request, httpResponse: Response, nextMiddleware: NextFunction) => {
-    try {
-      httpRequest.body = await schema.parseAsync(httpRequest.body);
-      nextMiddleware();
-    } catch (caughtError) {
-      if (caughtError instanceof ZodError) {
-        const validationErrorMessage = caughtError.issues.map((issue) => issue.message).join(', ');
-        return httpResponse.status(400).json({
-          message: validationErrorMessage || 'Invalid request payload',
-          errors: caughtError.issues,
-        });
-      }
-      nextMiddleware(caughtError);
+export const validateRequestBody = (schema: any) => {
+  return zValidator('json', schema, (result, c) => {
+    if (!result.success) {
+      return c.json({ message: result.error.issues[0].message }, 400);
     }
-  };
+  });
 };
 
-export const validateRequestQuery = (schema: ZodSchema) => {
-  return async (httpRequest: Request, httpResponse: Response, nextMiddleware: NextFunction) => {
-    try {
-      httpRequest.query = await schema.parseAsync(httpRequest.query) as any;
-      nextMiddleware();
-    } catch (caughtError) {
-      if (caughtError instanceof ZodError) {
-        const validationErrorMessage = caughtError.issues.map((issue) => issue.message).join(', ');
-        return httpResponse.status(400).json({
-          message: validationErrorMessage || 'Invalid query parameters',
-          errors: caughtError.issues,
-        });
-      }
-      nextMiddleware(caughtError);
+export const validateRequestParams = (schema: any) => {
+  return zValidator('param', schema, (result, c) => {
+    if (!result.success) {
+      return c.json({ message: result.error.issues[0].message }, 400);
     }
-  };
+  });
 };
 
-export const validateRequestParams = (schema: ZodSchema) => {
-  return async (httpRequest: Request, httpResponse: Response, nextMiddleware: NextFunction) => {
-    try {
-      httpRequest.params = await schema.parseAsync(httpRequest.params) as any;
-      nextMiddleware();
-    } catch (caughtError) {
-      if (caughtError instanceof ZodError) {
-        const validationErrorMessage = caughtError.issues.map((issue) => issue.message).join(', ');
-        return httpResponse.status(400).json({
-          message: validationErrorMessage || 'Invalid path parameters',
-          errors: caughtError.issues,
-        });
-      }
-      nextMiddleware(caughtError);
+export const validateRequestQuery = (schema: any) => {
+  return zValidator('query', schema, (result, c) => {
+    if (!result.success) {
+      return c.json({ message: result.error.issues[0].message }, 400);
     }
-  };
+  });
 };

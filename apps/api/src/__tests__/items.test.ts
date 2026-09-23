@@ -1,7 +1,20 @@
-import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+import { serve } from '@hono/node-server';
+import type { Server } from 'http';
 import { app } from '../index';
 import { db } from '../auth';
+
+let server: Server;
+beforeAll(() => {
+  server = serve({ fetch: app.fetch, port: 0 }) as Server;
+});
+
+afterAll(() => {
+  return new Promise((resolve) => {
+    server.close(() => resolve(undefined));
+  });
+});
 
 // Mock auth session helper for supertest endpoints while keeping real DB
 vi.mock('../auth', async (importOriginal) => {
@@ -81,20 +94,20 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
   });
 
   it('should return 200 OK with status ok on GET /api/health', async () => {
-    const healthResponse = await request(app).get('/api/health');
+    const healthResponse = await request(server).get('/api/health');
     expect(healthResponse.status).toBe(200);
     expect(healthResponse.body.status).toBe('ok');
     expect(healthResponse.body).toHaveProperty('timestamp');
   });
 
   it('should return 401 Unauthorized for unauthenticated GET /api/tasks', async () => {
-    const response = await request(app).get('/api/tasks');
+    const response = await request(server).get('/api/tasks');
     expect(response.status).toBe(401);
     expect(response.body.message).toContain('Authentication required');
   });
 
   it('should return an empty array for authenticated GET /api/tasks in database when no tasks exist', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .get('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token');
 
@@ -113,7 +126,7 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
       description: 'Cover API endpoints with supertest',
     };
 
-    const postResponse = await request(app)
+    const postResponse = await request(server)
       .post('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token')
       .send(newTaskPayload);
@@ -132,7 +145,7 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(dbRecord?.title).toBe(newTaskPayload.title);
 
     // Verify task is retrieved on subsequent GET request
-    const getResponse = await request(app)
+    const getResponse = await request(server)
       .get('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token');
 
@@ -144,14 +157,14 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
 
   it('should update and delete task in SQLite database', async () => {
     // 1. Create task
-    const createRes = await request(app)
+    const createRes = await request(server)
       .post('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token')
       .send({ title: 'Task to update and delete' });
     const taskId = createRes.body.id;
 
     // 2. Update task in SQLite
-    const updateRes = await request(app)
+    const updateRes = await request(server)
       .put(`/api/tasks/${taskId}`)
       .set('Authorization', 'Bearer mock-user-token')
       .send({ completed: true, title: 'Updated task title' });
@@ -164,7 +177,7 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(dbRowUpdated?.completed).toBe(1);
 
     // 3. Delete task from SQLite
-    const deleteRes = await request(app)
+    const deleteRes = await request(server)
       .delete(`/api/tasks/${taskId}`)
       .set('Authorization', 'Bearer mock-user-token');
 
@@ -179,7 +192,7 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
       description: 'Missing title property',
     };
 
-    const response = await request(app)
+    const response = await request(server)
       .post('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token')
       .send(invalidTaskPayload);
@@ -189,13 +202,13 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
   });
 
   it('should return 401 Unauthorized for unauthenticated GET /api/admin/users', async () => {
-    const response = await request(app).get('/api/admin/users');
+    const response = await request(server).get('/api/admin/users');
     expect(response.status).toBe(401);
     expect(response.body.message).toContain('Authentication required');
   });
 
   it('should return 403 Forbidden for non-admin user accessing GET /api/admin/users', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .get('/api/admin/users')
       .set('Authorization', 'Bearer mock-user-token');
 
@@ -204,7 +217,7 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
   });
 
   it('should return 200 OK with paginated list of users and metadata for admin user', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .get('/api/admin/users?page=1&limit=10')
       .set('Authorization', 'Bearer mock-admin-token');
 
@@ -225,7 +238,7 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
   });
 
   it('should filter users with search parameter on GET /api/admin/users', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .get('/api/admin/users?search=admin-test')
       .set('Authorization', 'Bearer mock-admin-token');
 
@@ -236,14 +249,14 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
   });
 
   it('should return 400 Bad Request when updating task with empty title via Zod validation', async () => {
-    const createResponse = await request(app)
+    const createResponse = await request(server)
       .post('/api/tasks')
       .set('Authorization', 'Bearer mock-user-token')
       .send({ title: 'Valid Task' });
 
     const createdTaskId = createResponse.body.id;
 
-    const invalidUpdateResponse = await request(app)
+    const invalidUpdateResponse = await request(server)
       .put(`/api/tasks/${createdTaskId}`)
       .set('Authorization', 'Bearer mock-user-token')
       .send({ title: '' });

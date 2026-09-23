@@ -1,54 +1,56 @@
-import express, { type Request, type Response, type NextFunction } from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { serve } from '@hono/node-server';
 import dotenv from 'dotenv';
-import { toNodeHandler } from 'better-auth/node';
 import { auth, initDb } from './auth';
 import { taskRouter } from './routes/task.routes';
 import { adminRouter } from './routes/admin.routes';
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+const app = new Hono();
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
 // CORS configuration
 app.use(
+  '*',
   cors({
     origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
   })
 );
 
-// Mount Better Auth BEFORE express.json() so raw request stream is preserved
-app.all('/api/auth/*', toNodeHandler(auth));
-
-// Middleware for parsing JSON and cookies
-app.use(express.json());
-app.use(cookieParser());
+// Mount Better Auth BEFORE other routes
+app.on(['POST', 'GET'], '/api/auth/**', (c) => auth.handler(c.req.raw));
 
 // Health check endpoint for container readiness and liveness probes
-app.get('/api/health', (_httpRequest: Request, httpResponse: Response) => {
-  httpResponse.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', (c) => {
+  return c.json({ status: 'ok', timestamp: new Date().toISOString() }, 200);
 });
 
 // Application API Routers
-app.use('/api/tasks', taskRouter);
-app.use('/api/admin', adminRouter);
+app.route('/api/tasks', taskRouter);
+app.route('/api/admin', adminRouter);
 
 // Global Error Handler
-app.use((unhandledError: any, _httpRequest: Request, httpResponse: Response, _nextMiddleware: NextFunction) => {
-  console.error('Unhandled API Error:', unhandledError);
-  httpResponse.status(500).json({
-    message: unhandledError?.message || 'Internal Server Error',
-  });
+app.onError((err, c) => {
+  console.error('Unhandled API Error:', err);
+  return c.json({
+    message: err.message || 'Internal Server Error',
+  }, 500);
 });
 
 if (process.env.NODE_ENV !== 'test') {
   initDb().then(() => {
-    const apiServer = app.listen(PORT, () => {
-      console.log(`Server is running on http://localhost:${PORT}`);
-    });
+    const apiServer = serve(
+      {
+        fetch: app.fetch,
+        port: PORT,
+      },
+      (info) => {
+        console.log(`Server is running on http://localhost:${info.port}`);
+      }
+    );
 
     const gracefulShutdownHandler = (signalName: string) => {
       console.log(`[API] Received ${signalName}, shutting down gracefully...`);

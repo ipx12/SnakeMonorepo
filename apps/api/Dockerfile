@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Express API service in SnakeMonorepo (Turborepo Pruned)
+# Multi-stage Dockerfile for Hono API service in SnakeMonorepo (Turborepo Pruned)
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -37,19 +37,19 @@ ENV PORT=3001
 ENV DATABASE_URL=file:/app/data/sqlite.db
 
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 expressjs
+    adduser --system --uid 1001 honojs
 
 # Prepare persistent data directory for SQLite database
-RUN mkdir -p /app/data && chown -R expressjs:nodejs /app/data
+RUN mkdir -p /app/data && chown -R honojs:nodejs /app/data
 
 # Copy workspace dependencies (now without devDependencies) and built artifacts
-COPY --from=builder --chown=expressjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=expressjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=expressjs:nodejs /app/packages/types ./packages/types
-COPY --from=builder --chown=expressjs:nodejs /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder --chown=expressjs:nodejs /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=honojs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=honojs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=honojs:nodejs /app/packages/types ./packages/types
+COPY --from=builder --chown=honojs:nodejs /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=honojs:nodejs /app/apps/api/dist ./apps/api/dist
 
-USER expressjs
+USER honojs
 
 EXPOSE 3001
 
