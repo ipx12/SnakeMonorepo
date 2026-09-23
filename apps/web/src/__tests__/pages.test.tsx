@@ -43,6 +43,7 @@ import LoginPage from '../app/login/page';
 import RegisterPage from '../app/register/page';
 import AdminUsersPage from '../app/admin/users/page';
 import { useSession } from '@/lib/auth-client';
+import { getTasks, getAdminUsers } from '@/lib/api';
 
 function renderWithProviders(ui: React.ReactElement) {
   const testQueryClient = new QueryClient({
@@ -99,6 +100,19 @@ describe('App Router Pages Integration Tests', () => {
       });
     });
 
+    it('HomePage should render error banner when task loading fails without crashing layout', async () => {
+      vi.mocked(getTasks).mockRejectedValueOnce(new Error('Internal server error loading tasks'));
+      const Component = await HomePage();
+      renderWithProviders(Component);
+
+      await waitFor(() => {
+        expect(screen.getByText('Create New Task')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('What needs to be done?')).toBeInTheDocument();
+      });
+
+      expect(await screen.findByText('Internal server error loading tasks')).toBeInTheDocument();
+    });
+
     it('AdminUsersPage should show Access Denied for standard user', async () => {
       const Component = await AdminUsersPage();
       renderWithProviders(Component);
@@ -129,6 +143,18 @@ describe('App Router Pages Integration Tests', () => {
         expect(screen.getByPlaceholderText(/Search by name/i)).toBeInTheDocument();
         expect(screen.getByRole('table')).toBeInTheDocument();
       });
+    });
+
+    it('AdminUsersPage should display error banner when user list query fails without crashing layout', async () => {
+      vi.mocked(getAdminUsers).mockRejectedValueOnce(new Error('Database connectivity error'));
+      const Component = await AdminUsersPage();
+      renderWithProviders(Component);
+
+      await waitFor(() => {
+        expect(screen.getByText('Total Registered')).toBeInTheDocument();
+      });
+
+      expect(await screen.findByText('Database connectivity error')).toBeInTheDocument();
     });
   });
 

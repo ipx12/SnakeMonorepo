@@ -35,6 +35,16 @@ vi.mock('../auth', async (importOriginal) => {
               },
             };
           }
+          if (authHeader === 'Bearer mock-other-user-token') {
+            return {
+              user: {
+                id: 'user-other-456',
+                name: 'Other User',
+                email: 'other@example.com',
+                role: 'user',
+              },
+            };
+          }
           if (authHeader === 'Bearer mock-admin-token') {
             return {
               user: {
@@ -71,6 +81,15 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
           id: 'user-test-123',
           name: 'Test User',
           email: 'test@example.com',
+          emailVerified: 1,
+          role: 'user',
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: 'user-other-456',
+          name: 'Other User',
+          email: 'other@example.com',
           emailVerified: 1,
           role: 'user',
           createdAt: now,
@@ -155,7 +174,63 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(foundTask.title).toBe(newTaskPayload.title);
   });
 
-  it('should update and delete task in SQLite database', async () => {
+  it('should return single task on GET /api/tasks/:id for owner', async () => {
+    const createRes = await request(server)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'Single Task Test' });
+    const taskId = createRes.body.id;
+
+    const singleTaskResponse = await request(server)
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-user-token');
+
+    expect(singleTaskResponse.status).toBe(200);
+    expect(singleTaskResponse.body.id).toBe(taskId);
+    expect(singleTaskResponse.body.title).toBe('Single Task Test');
+  });
+
+  it('should return 404 on GET /api/tasks/:id when task does not exist', async () => {
+    const nonExistentResponse = await request(server)
+      .get('/api/tasks/non-existent-task-id')
+      .set('Authorization', 'Bearer mock-user-token');
+
+    expect(nonExistentResponse.status).toBe(404);
+    expect(nonExistentResponse.body.message).toBe('Task not found');
+  });
+
+  it('should return 403 Forbidden on GET /api/tasks/:id when another user accesses private task', async () => {
+    const createRes = await request(server)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'User 1 Private Task' });
+    const taskId = createRes.body.id;
+
+    const forbiddenResponse = await request(server)
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-other-user-token');
+
+    expect(forbiddenResponse.status).toBe(403);
+    expect(forbiddenResponse.body.message).toBe('Forbidden');
+  });
+
+  it('should allow admin to retrieve any user task on GET /api/tasks/:id', async () => {
+    const createRes = await request(server)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'User Task Inspected by Admin' });
+    const taskId = createRes.body.id;
+
+    const adminResponse = await request(server)
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-admin-token');
+
+    expect(adminResponse.status).toBe(200);
+    expect(adminResponse.body.id).toBe(taskId);
+    expect(adminResponse.body.title).toBe('User Task Inspected by Admin');
+  });
+
+  it('should update and delete task in SQLite database for owner', async () => {
     // 1. Create task
     const createRes = await request(server)
       .post('/api/tasks')
@@ -185,6 +260,66 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
 
     const dbRowDeleted = await db.selectFrom('task').selectAll().where('id', '=', taskId).executeTakeFirst();
     expect(dbRowDeleted).toBeUndefined();
+  });
+
+  it('should return 403 Forbidden when another user attempts to update or delete a task', async () => {
+    const createRes = await request(server)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'Owner Task' });
+    const taskId = createRes.body.id;
+
+    // Unauthorized update attempt
+    const updateAttempt = await request(server)
+      .put(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-other-user-token')
+      .send({ title: 'Hacked Title' });
+    expect(updateAttempt.status).toBe(403);
+    expect(updateAttempt.body.message).toBe('Forbidden');
+
+    // Unauthorized delete attempt
+    const deleteAttempt = await request(server)
+      .delete(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-other-user-token');
+    expect(deleteAttempt.status).toBe(403);
+    expect(deleteAttempt.body.message).toBe('Forbidden');
+  });
+
+  it('should allow admin to update and delete any user task', async () => {
+    const createRes = await request(server)
+      .post('/api/tasks')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'User Task for Admin Override' });
+    const taskId = createRes.body.id;
+
+    // Admin updates task
+    const adminUpdate = await request(server)
+      .put(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-admin-token')
+      .send({ title: 'Admin Overridden Title' });
+    expect(adminUpdate.status).toBe(200);
+    expect(adminUpdate.body.title).toBe('Admin Overridden Title');
+
+    // Admin deletes task
+    const adminDelete = await request(server)
+      .delete(`/api/tasks/${taskId}`)
+      .set('Authorization', 'Bearer mock-admin-token');
+    expect(adminDelete.status).toBe(200);
+  });
+
+  it('should return 404 when updating or deleting a non-existent task', async () => {
+    const updateResponse = await request(server)
+      .put('/api/tasks/missing-task-id')
+      .set('Authorization', 'Bearer mock-user-token')
+      .send({ title: 'New Title' });
+    expect(updateResponse.status).toBe(404);
+    expect(updateResponse.body.message).toBe('Task not found');
+
+    const deleteResponse = await request(server)
+      .delete('/api/tasks/missing-task-id')
+      .set('Authorization', 'Bearer mock-user-token');
+    expect(deleteResponse.status).toBe(404);
+    expect(deleteResponse.body.message).toBe('Task not found');
   });
 
   it('should return 400 Bad Request when creating task without title', async () => {
@@ -225,8 +360,8 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(response.body).toHaveProperty('users');
     expect(response.body).toHaveProperty('pagination');
     expect(Array.isArray(response.body.users)).toBe(true);
-    expect(response.body.users.length).toBe(2);
-    expect(response.body.pagination.totalCount).toBe(2);
+    expect(response.body.users.length).toBe(3);
+    expect(response.body.pagination.totalCount).toBe(3);
     expect(response.body.pagination.page).toBe(1);
     expect(response.body.pagination.limit).toBe(10);
     expect(response.body.pagination.totalPages).toBe(1);
@@ -265,5 +400,3 @@ describe('Tasks API Endpoints Integration & Database Persistence', () => {
     expect(invalidUpdateResponse.body.message).toContain('Title cannot be empty');
   });
 });
-
-

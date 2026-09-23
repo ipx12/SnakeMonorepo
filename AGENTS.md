@@ -66,13 +66,17 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 ### 5. Testing Infrastructure & Strategy
 
 - **Test Runner**: **Vitest** for both `apps/web` and `apps/api`.
-- **API Integration Testing**: **Supertest** for testing Hono endpoints in `apps/api` without running network ports using `@hono/node-server` (`items.test.ts`).
+- **API Integration Testing**: **Supertest** for testing Hono endpoints in `apps/api` without running network ports using `@hono/node-server` ([`tasks.test.ts`](file:///d:/WEB/SnakeMonorepo/apps/api/src/__tests__/tasks.test.ts)) covering tasks CRUD, ownership isolation, 403 Forbidden checks, and admin privileges.
 - **Service Layer Unit Testing**: Direct database and business logic testing in `apps/api/src/__tests__/services.test.ts`.
 - **Zod Schema Unit Testing**: Validation edge cases testing in `apps/web/src/__tests__/schemas.test.ts`.
-- **UI Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests.
+- **UI & Component Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests:
+  - Navigation & Session: [`Navbar.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/Navbar.test.tsx) for guest/user/admin views and sign out cache invalidation.
+  - Authentication Forms: [`LoginForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/LoginForm.test.tsx) and [`RegisterForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/RegisterForm.test.tsx) for validation, demo auto-fill, and submission handlers.
+  - Dashboard: [`TaskList.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/TaskList.test.tsx) for task rendering, completion toggles, and inline editing workflows.
+  - Page Route Hydration: [`pages.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/pages.test.tsx) for SSR hydration and route access.
 - **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
 - **Admin UI Component Testing**: Integration tests in [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx) testing access controls, stats cards, user rows, search filtering, and pagination navigation.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 65 unit & integration tests across workspaces (18 in `apps/api`, 47 in `apps/web`).
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 90 unit & integration tests across workspaces (25 in `apps/api`, 65 in `apps/web`).
 
 ### 6. Directory Structure Conventions
 
@@ -122,11 +126,12 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`), SSR prefetching (`serverFetch`), and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
 - **Deployment Documentation**: Complete guide in [`docs/guides/docker-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/docker-deployment.md).
 
-## AGENTS.md Maintenance Policy
+## AGENTS.md & Documentation Maintenance Policy
 
-1. **Automated Documentation**: Whenever new technologies, routes, endpoints, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
-2. **User Confirmation Prompt**: Always ask the user if newly introduced technologies or features should be added to `AGENTS.md`.
-3. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
-4. **Mandatory Linter & Test Verification**: Always run the linter (`npm run lint` / `turbo run lint`) and tests (`npm run test`) to verify that there are zero warnings, zero lint errors, and all tests pass before completing any task.
-5. **Continuous Documentation Sync (`docs/`)**: Constantly check and, if needed, update the documentation in the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory (architecture overviews, API specs, developer guides) whenever architecture, state management, dependencies, routes, or workflows change.
+1. **Mandatory Post-Change Validation**: After ANY change (features, bugfixes, refactorings, tests, endpoints, dependencies, or configuration), ALWAYS check and validate the modifications against both `AGENTS.md` and the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory. Ensure that both files/folders accurately describe the changes and the current state of the project.
+2. **Automated Documentation**: Whenever new technologies, routes, endpoints, test suites, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
+3. **User Confirmation Prompt**: Always ask the user if newly introduced technologies or features should be added to `AGENTS.md`.
+4. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
+5. **Mandatory Linter & Test Verification**: Always run the linter (`npm run lint` / `turbo run lint`) and tests (`npm run test`) to verify that there are zero warnings, zero lint errors, and all tests pass before completing any task.
+6. **Continuous Documentation Sync (`docs/`)**: Constantly verify and, whenever needed, update the documentation in the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory (architecture overviews, API specs, developer guides, test metrics, and quickstart commands) whenever architecture, state management, dependencies, routes, test suites, or workflows change.
 

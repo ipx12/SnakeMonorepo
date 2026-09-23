@@ -187,4 +187,19 @@ describe('AdminUsersContainer Component Integration Tests', () => {
     // Verify page number updated in DOM
     expect(screen.getByText('2')).toBeInTheDocument();
   });
+
+  it('should display error message when user fetching fails without crashing the admin panel', async () => {
+    vi.mocked(apiModule.getAdminUsers).mockRejectedValueOnce(
+      new Error('Failed to load system users')
+    );
+
+    renderWithTestProviders(<AdminUsersContainer initialUser={mockAdminUser} />);
+
+    // Header and metrics should still render
+    expect(screen.getByRole('heading', { name: /All System Users/i })).toBeInTheDocument();
+    expect(screen.getByText('Total Registered')).toBeInTheDocument();
+
+    // Error banner should be displayed gracefully
+    expect(await screen.findByText('Failed to load system users')).toBeInTheDocument();
+  });
 });
