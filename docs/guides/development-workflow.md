@@ -8,6 +8,8 @@
 | :--- | :--- |
 | `npm run dev` | Launch frontend (`localhost:3000`) and backend (`localhost:3001`) concurrently via Turborepo |
 | `npm run test` | Run all 90 tests across workspaces (Vitest, Supertest, React Testing Library) |
+| `npm run lint` | Run ESLint across monorepo packages via Turborepo |
+| `npm run check-types` | Run TypeScript type checks (`tsc --noEmit`) across all packages via Turborepo |
 | `npm run build` | Compile TypeScript and build Next.js production bundle |
 | `npm run clean` | Clean all build artifacts (`.turbo`, `dist`, `.next`) |
 
@@ -52,3 +54,14 @@ The monorepo features a layered automated testing suite executed via Vitest (**9
 3. **Write Unit & Integration Tests**: Add automated tests covering happy path, RBAC authorization, and degraded error states.
 4. **Run Verification Suite**: Verify zero linter warnings and 100% test pass rate (`npm run lint` and `npm run test`).
 5. **Mandatory Documentation Validation**: Always review, validate, and synchronize both [`AGENTS.md`](../../AGENTS.md) and all relevant guides/specs in [`docs/`](../README.md) (`README.md`, `architecture/`, `api/`, `guides/`) so all test counts, endpoint contracts, and architecture patterns stay accurate.
+
+---
+
+## 5. Continuous Integration (GitHub Actions)
+
+Automated checks are executed on every push and pull request targeting `main` or `develop` via [`.github/workflows/ci.yaml`](../../.github/workflows/ci.yaml):
+
+* **Lint Job**: Runs `npm run lint` across packages to ensure zero ESLint warnings and code style compliance.
+* **Type Check Job**: Runs `npm run check-types` (`tsc --noEmit`) across `@snake/types`, `apps/api`, and `apps/web` to guarantee complete type safety.
+* **Tests Job**: Executes the full 90-test automated suite (`npm run test`) across all workspaces.
+
