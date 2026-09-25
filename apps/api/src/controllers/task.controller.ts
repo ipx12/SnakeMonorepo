@@ -1,8 +1,15 @@
 import { Context } from 'hono';
-import { UserRole } from '@snake/types';
+import {
+  UserRole,
+  type CreateTaskPayload,
+  type UpdateTaskPayload,
+} from '@snake/types';
 import type { UserSession } from '../middlewares/auth.middleware';
 import * as taskService from '../services/task.service';
 
+/**
+ * Controller handler returning all tasks belonging to the authenticated user.
+ */
 export const getTasksHandler = async (c: Context) => {
   const session = c.get('userSession') as UserSession;
   const userId = session.user.id;
@@ -10,11 +17,15 @@ export const getTasksHandler = async (c: Context) => {
   try {
     const userTasks = await taskService.getTasksForUser(userId, userRole);
     return c.json(userTasks);
-  } catch (caughtError: any) {
-    return c.json({ message: 'Failed to fetch tasks', error: caughtError.message }, 500);
+  } catch (caughtError: unknown) {
+    const errorMessage = caughtError instanceof Error ? caughtError.message : 'Unknown server error';
+    return c.json({ message: 'Failed to fetch tasks', error: errorMessage }, 500);
   }
 };
 
+/**
+ * Controller handler retrieving a single task by ID with ownership verification.
+ */
 export const getTaskByIdHandler = async (c: Context) => {
   const taskId = c.req.param('id');
   if (!taskId) {
@@ -29,37 +40,45 @@ export const getTaskByIdHandler = async (c: Context) => {
     const session = c.get('userSession') as UserSession;
     const currentUserId = session.user.id;
     const userRole = (session.user as { role?: string }).role;
-    
+
     if (foundTask.userId !== currentUserId && userRole !== UserRole.Admin) {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
     return c.json(foundTask);
-  } catch (caughtError: any) {
-    return c.json({ message: 'Failed to fetch task', error: caughtError.message }, 500);
+  } catch (caughtError: unknown) {
+    const errorMessage = caughtError instanceof Error ? caughtError.message : 'Unknown server error';
+    return c.json({ message: 'Failed to fetch task', error: errorMessage }, 500);
   }
 };
 
+/**
+ * Controller handler creating a new task from validated request body.
+ */
 export const createTaskHandler = async (c: Context) => {
   const session = c.get('userSession') as UserSession;
   const currentUserId = session.user.id;
-  const body = c.req.valid('json' as never); // Types handled by zValidator on the route
-  
+  const body = c.req.valid('json' as never) as CreateTaskPayload;
+
   try {
-    const createdTask = await taskService.createTask(currentUserId, body as any);
+    const createdTask = await taskService.createTask(currentUserId, body);
     return c.json(createdTask, 201);
-  } catch (caughtError: any) {
-    return c.json({ message: 'Failed to create task', error: caughtError.message }, 500);
+  } catch (caughtError: unknown) {
+    const errorMessage = caughtError instanceof Error ? caughtError.message : 'Unknown server error';
+    return c.json({ message: 'Failed to create task', error: errorMessage }, 500);
   }
 };
 
+/**
+ * Controller handler updating task fields with ownership and admin verification.
+ */
 export const updateTaskHandler = async (c: Context) => {
   const taskId = c.req.param('id');
   if (!taskId) {
     return c.json({ message: 'Task ID is required' }, 400);
   }
-  const body = c.req.valid('json' as never);
-  
+  const body = c.req.valid('json' as never) as UpdateTaskPayload;
+
   try {
     const existingTask = await taskService.getTaskById(taskId);
     if (!existingTask) {
@@ -69,18 +88,22 @@ export const updateTaskHandler = async (c: Context) => {
     const session = c.get('userSession') as UserSession;
     const currentUserId = session.user.id;
     const userRole = (session.user as { role?: string }).role;
-    
+
     if (existingTask.userId !== currentUserId && userRole !== UserRole.Admin) {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
-    const updatedTask = await taskService.updateTask(existingTask, body as any);
+    const updatedTask = await taskService.updateTask(existingTask, body);
     return c.json(updatedTask);
-  } catch (caughtError: any) {
-    return c.json({ message: 'Failed to update task', error: caughtError.message }, 500);
+  } catch (caughtError: unknown) {
+    const errorMessage = caughtError instanceof Error ? caughtError.message : 'Unknown server error';
+    return c.json({ message: 'Failed to update task', error: errorMessage }, 500);
   }
 };
 
+/**
+ * Controller handler deleting a task by ID with ownership verification.
+ */
 export const deleteTaskHandler = async (c: Context) => {
   const taskId = c.req.param('id');
   if (!taskId) {
@@ -95,14 +118,15 @@ export const deleteTaskHandler = async (c: Context) => {
     const session = c.get('userSession') as UserSession;
     const currentUserId = session.user.id;
     const userRole = (session.user as { role?: string }).role;
-    
+
     if (existingTask.userId !== currentUserId && userRole !== UserRole.Admin) {
       return c.json({ message: 'Forbidden' }, 403);
     }
 
     await taskService.deleteTask(taskId);
     return c.json(existingTask);
-  } catch (caughtError: any) {
-    return c.json({ message: 'Failed to delete task', error: caughtError.message }, 500);
+  } catch (caughtError: unknown) {
+    const errorMessage = caughtError instanceof Error ? caughtError.message : 'Unknown server error';
+    return c.json({ message: 'Failed to delete task', error: errorMessage }, 500);
   }
 };

@@ -15,8 +15,13 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 // Auth Schemas & Types
 // ---------------------------------------------------------------------------
 
+/**
+ * Schema validating user credentials for login requests.
+ */
 export const loginSchema = z.object({
+  /** User's registered email address */
   email: z.string().email('Please enter a valid email address'),
+  /** User's account password (minimum 6 characters) */
   password: z
     .string()
     .min(1, 'Password is required')
@@ -26,20 +31,28 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type LoginPayload = LoginFormData;
 
+/**
+ * Schema validating new user account creation, including confirmation password matching.
+ */
 export const registerSchema = z
   .object({
+    /** User's full display name */
     name: z
       .string()
       .min(1, 'Full name is required')
       .min(2, 'Name must be at least 2 characters'),
+    /** Unique email address */
     email: z.string().email('Please enter a valid email address'),
+    /** Account password (minimum 6 characters) */
     password: z
       .string()
       .min(1, 'Password is required')
       .min(6, 'Password must be at least 6 characters'),
+    /** Password confirmation matching the password field */
     confirmPassword: z
       .string()
       .min(1, 'Confirm password is required'),
+    /** Assigned access role in the system */
     role: z.nativeEnum(UserRole),
   })
   .refine((formData) => formData.password === formData.confirmPassword, {
@@ -84,24 +97,38 @@ export interface AuthResponse {
 // Task Schemas & Types
 // ---------------------------------------------------------------------------
 
+/**
+ * Schema validating task creation request bodies.
+ */
 export const createTaskSchema = z.object({
+  /** Required task title */
   title: z
     .string({ error: 'Title is required' })
     .min(1, 'Title is required')
     .trim(),
+  /** Optional markdown or plain text notes */
   description: z.string().optional().default(''),
 });
 
 export type CreateTaskPayload = z.infer<typeof createTaskSchema>;
 
+/**
+ * Schema validating partial updates to an existing task.
+ */
 export const updateTaskSchema = z.object({
+  /** Updated title (non-empty if provided) */
   title: z.string().min(1, 'Title cannot be empty').trim().optional(),
+  /** Updated notes or description */
   description: z.string().optional(),
+  /** Updated task completion status */
   completed: z.boolean().optional(),
 });
 
 export type UpdateTaskPayload = z.infer<typeof updateTaskSchema>;
 
+/**
+ * Schema validating URL route parameters containing a task ID.
+ */
 export const taskIdParamSchema = z.object({
   id: z.string().min(1, 'Task ID is required'),
 });
@@ -122,9 +149,15 @@ export type Item = Task;
 // Pagination & Admin Query Schemas
 // ---------------------------------------------------------------------------
 
+/**
+ * Schema validating query string parameters for the admin users list endpoint.
+ */
 export const adminUsersQuerySchema = z.object({
+  /** Page number, 1-indexed (defaults to 1) */
   page: z.coerce.number().int().positive().default(1),
+  /** Records per page limit, between 1 and 100 (defaults to 10) */
   limit: z.coerce.number().int().positive().max(100).default(10),
+  /** Substring search filter across name, email, role, or ID */
   search: z.string().optional().default(''),
 });
 

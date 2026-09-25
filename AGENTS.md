@@ -95,9 +95,11 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - `apps/api/src/middlewares/`: Hono authentication and validation middlewares.
 - `packages/types/`: Shared TypeScript models, interfaces, and Zod schemas (`@snake/types`).
 
-### 7. Code Naming Conventions
+### 7. Code Naming & Strict Typing Conventions
 
 - **Semantic Naming**: All variable names, parameters, functions, and state values MUST be self-descriptive and semantic (e.g. `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`). Avoid single-letter variables (like `u`, `q`, `e`, `i`, `val`) or non-descriptive names (like `data`, `res`, `items`, `loading`, `error`).
+- **Zero `any` Standard**: Usage of `any` is strictly prohibited across services, controllers, and utility layers. All database rows must leverage strongly-typed Kysely schemas (`Selectable<Table>`), and request payloads must utilize shared Zod inferred types (`CreateTaskPayload`, `AdminUsersQueryParams`).
+- **JSDoc / TSDoc Documentation Standard**: All service functions (`services/*.ts`), API client methods (`lib/api.ts`), custom hooks (`hooks/*.ts`), and Zod schemas (`packages/types`) MUST be documented with standard JSDoc/TSDoc annotations (`@param`, `@returns`, `@throws`, `@example`).
 
 ### 8. Responsive Design & Mobile-First Standard (320px+)
 
@@ -134,4 +136,5 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 4. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
 5. **Mandatory Linter & Test Verification**: Always run the linter (`npm run lint` / `turbo run lint`) and tests (`npm run test`) to verify that there are zero warnings, zero lint errors, and all tests pass before completing any task.
 6. **Continuous Documentation Sync (`docs/`)**: Constantly verify and, whenever needed, update the documentation in the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory (architecture overviews, API specs, developer guides, test metrics, and quickstart commands) whenever architecture, state management, dependencies, routes, test suites, or workflows change.
+7. **Strict Typing & JSDoc Maintenance**: Ensure all newly written or modified services, hooks, and API methods contain comprehensive JSDoc/TSDoc and zero `any` types.
 

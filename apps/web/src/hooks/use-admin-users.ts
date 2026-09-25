@@ -6,11 +6,24 @@ import { adminUsersQueryOptions } from '@/lib/query-options';
 import { UserRole } from '@snake/types';
 
 export interface UseAdminUsersOptions {
+  /** If false, disables automatic query execution (useful when waiting for Admin authorization) */
   enabled?: boolean;
+  /** Initial page index (defaults to 1) */
   initialPage?: number;
+  /** Initial page size limit (defaults to 10) */
   initialPageSize?: number;
 }
 
+/**
+ * Custom React Hook managing paginated user queries, 300ms search debouncing,
+ * and aggregated user role metrics for the Admin Dashboard.
+ *
+ * @param options - Configuration options controlling initial pagination and enablement
+ * @returns State and navigation helpers for paginated users table and summary metrics
+ *
+ * @example
+ * const { usersList, totalUsers, adminCount, handlePageChange, setSearchQuery } = useAdminUsers();
+ */
 export function useAdminUsers(options: UseAdminUsersOptions = {}) {
   const { enabled = true, initialPage = 1, initialPageSize = 10 } = options;
 

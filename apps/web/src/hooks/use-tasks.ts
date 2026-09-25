@@ -7,9 +7,20 @@ import { taskKeys } from '@snake/types';
 import { tasksQueryOptions } from '@/lib/query-options';
 
 export interface UseTasksOptions {
+  /** If false, disables automatic query execution (useful when waiting for user session) */
   enabled?: boolean;
 }
 
+/**
+ * Custom React Hook encapsulating TanStack Query v5 server state, cache invalidation,
+ * and optimistic UI updates for personal tasks.
+ *
+ * @param options - Configuration options controlling query enablement
+ * @returns Object providing task data, loading/error states, and CRUD mutation handlers
+ *
+ * @example
+ * const { taskList, isTasksLoading, createTask, toggleTaskCompletion, deleteTask } = useTasks();
+ */
 export function useTasks(options: UseTasksOptions = {}) {
   const { enabled = true } = options;
   const queryClient = useQueryClient();

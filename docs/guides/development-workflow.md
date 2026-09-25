@@ -36,12 +36,13 @@ The monorepo features a layered automated testing suite executed via Vitest (**9
 
 ---
 
-## 3. Code Conventions (Semantic Variable Naming)
+## 3. Code Conventions (Semantic Variable Naming & Strict Types)
 
-The project adheres to a strict semantic variable naming standard: **all variables, parameters, and function names must be self-descriptive and semantic**.
-
-* ❌ **Avoid**: `u`, `q`, `e`, `i`, `data`, `res`, `items`, `loading`, `error`.
-* ✅ **Use**: `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`, `httpRequest`, `httpResponse`.
+* **Semantic Naming Standard**: All variables, parameters, and function names must be self-descriptive and semantic.
+  * ❌ **Avoid**: `u`, `q`, `e`, `i`, `data`, `res`, `items`, `loading`, `error`.
+  * ✅ **Use**: `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`, `httpRequest`, `httpResponse`.
+* **Zero `any` Standard**: Usage of `any` is prohibited. Use strongly-typed Kysely schemas (`Selectable<Table>`), Zod inferred types, or `unknown` with type guards.
+* **JSDoc / TSDoc Documentation Standard**: All service functions (`services/*.ts`), API client methods (`lib/api.ts`), custom hooks (`hooks/*.ts`), and Zod validation schemas (`packages/types`) must be documented with JSDoc annotations (`@param`, `@returns`, `@throws`, `@example`).
 
 ---
 
