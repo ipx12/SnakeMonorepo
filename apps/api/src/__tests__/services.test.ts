@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 import { db } from '../auth';
+import { runMigrationsToLatest } from '../migrator';
 import { UserRole } from '@snake/types';
 import * as taskService from '../services/task.service';
 import * as adminService from '../services/admin.service';
@@ -8,13 +9,13 @@ describe('Backend Services Unit Tests', () => {
   const mockUserId = 'service-test-user-1';
   const mockAdminId = 'service-test-admin-1';
 
+  beforeAll(async () => {
+    await runMigrationsToLatest(db);
+  });
+
   beforeEach(async () => {
-    try {
-      await db.deleteFrom('task').execute();
-      await db.deleteFrom('user').execute();
-    } catch {
-      // Table will be created by initDb
-    }
+    await db.deleteFrom('task').execute();
+    await db.deleteFrom('user').execute();
 
     const currentTimestamp = Date.now();
     await db
