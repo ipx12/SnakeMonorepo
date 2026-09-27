@@ -126,7 +126,14 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - **API Multi-Stage Build**: [`apps/api/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/api/Dockerfile) based on `node:22-alpine` with an unprivileged system user `honojs`, preconfigured for `DATABASE_URL=file:/app/data/sqlite.db`. Includes `/api/health` endpoint and `SIGTERM`/`SIGINT` graceful shutdown handlers.
 - **Web Multi-Stage Build**: [`apps/web/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/web/Dockerfile) based on `node:22-alpine` utilizing Next.js `output: 'standalone'` mode (reducing image footprint to ~150MB) and unprivileged `nextjs` system user. Injects `INTERNAL_API_URL` during build stage for static rewrite baking.
 - **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`), SSR prefetching (`serverFetch`), and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
-- **Deployment Documentation**: Complete guide in [`docs/guides/docker-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/docker-deployment.md).
+### 11. Continuous Integration (GitHub Actions)
+
+- **Workflow Pipeline**: Centralized GitHub Actions workflow located in [`.github/workflows/ci.yaml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/ci.yaml) running on `ubuntu-latest` with Node.js 22.
+- **Triggers & Concurrency**: Triggered on push and pull requests targeting `main` and `develop` branches. Uses workflow-level concurrency cancellation (`cancel-in-progress: true`) for outdated runs.
+- **Verification Jobs**:
+  - `lint`: Validates code style and checks for ESLint violations (`npm run lint`).
+  - `typecheck`: Runs TypeScript type checking (`npm run check-types` / `tsc --noEmit`) across `@snake/types`, `apps/api`, and `apps/web`.
+  - `test`: Executes all 90 unit, integration, and UI component tests across workspaces (`npm run test`).
 
 ## AGENTS.md & Documentation Maintenance Policy
 

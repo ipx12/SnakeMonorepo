@@ -4,16 +4,19 @@ import { serve } from '@hono/node-server';
 import type { Server } from 'http';
 import { app } from '../index';
 import { db } from '../auth';
+import { runMigrationsToLatest } from '../migrator';
 
 let server: Server;
-beforeAll(() => {
+beforeAll(async () => {
+  await runMigrationsToLatest(db);
   server = serve({ fetch: app.fetch, port: 0 }) as Server;
 });
 
-afterAll(() => {
-  return new Promise((resolve) => {
+afterAll(async () => {
+  await new Promise((resolve) => {
     server.close(() => resolve(undefined));
   });
+  await db.destroy();
 });
 
 // Mock auth session helper for supertest endpoints while keeping real DB
@@ -64,13 +67,9 @@ vi.mock('../auth', async (importOriginal) => {
 
 describe('Tasks API Endpoints Integration & Database Persistence', () => {
   beforeEach(async () => {
-    // Clean tasks table before each test to ensure test isolation
-    try {
-      await db.deleteFrom('task').execute();
-      await db.deleteFrom('user').execute();
-    } catch {
-      // Table will be created by initDb
-    }
+    // Clean tasks and users table before each test to ensure test isolation
+    await db.deleteFrom('task').execute();
+    await db.deleteFrom('user').execute();
 
     // Insert mock users to satisfy FOREIGN KEY constraint on task.userId
     const now = Date.now();
