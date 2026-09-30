@@ -1,9 +1,13 @@
 import { type Kysely, sql } from 'kysely';
 
 export async function up(database: Kysely<unknown>): Promise<void> {
-  // Ensure SQLite concurrency settings
-  await sql`PRAGMA journal_mode = WAL;`.execute(database);
-  await sql`PRAGMA busy_timeout = 5000;`.execute(database);
+  // Ensure SQLite concurrency settings for local file databases (Turso manages this remotely)
+  try {
+    await sql`PRAGMA journal_mode = WAL;`.execute(database);
+    await sql`PRAGMA busy_timeout = 5000;`.execute(database);
+  } catch {
+    // Ignore PRAGMA errors on remote/serverless environments like Turso
+  }
 
   // 1. User table (Better Auth core)
   await database.schema

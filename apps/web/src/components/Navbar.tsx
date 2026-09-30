@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserRole } from '@snake/types';
@@ -12,9 +12,11 @@ export function Navbar() {
   const { data: session, isPending: isAuthLoading } = useSession();
   const user = session?.user;
   const queryClient = useQueryClient();
+  const router = useRouter();
   const logout = async () => {
     await signOut();
     queryClient.clear();
+    router.push('/login');
   };
   const pathname = usePathname();
 

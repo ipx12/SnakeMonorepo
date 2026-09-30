@@ -2,12 +2,26 @@ import { betterAuth } from 'better-auth';
 import { Kysely } from 'kysely';
 import { LibsqlDialect } from '@libsql/kysely-libsql';
 import { DatabaseSchema } from '@snake/types';
+import dotenv from 'dotenv';
+import path from 'node:path';
 import { runMigrationsToLatest } from './migrator';
 import { seedDemoUser } from './seed';
 
+// Ensure environment variables are loaded from root or local workspace
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+
+// In automated test environments, use isolated local SQLite database to prevent
+// remote Turso network latency, rate limits, and parallel test data collisions.
+const isTestEnvironment = process.env.NODE_ENV === 'test';
+const databaseUrl = isTestEnvironment
+  ? 'file:test.db'
+  : (process.env.DATABASE_URL || 'file:sqlite.db');
+
 export const db = new Kysely<DatabaseSchema>({
   dialect: new LibsqlDialect({
-    url: process.env.DATABASE_URL || 'file:sqlite.db',
+    url: databaseUrl,
+    authToken: isTestEnvironment ? undefined : process.env.TURSO_AUTH_TOKEN,
   }),
 });
 

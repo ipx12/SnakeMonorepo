@@ -9,6 +9,7 @@ function makeQueryClient() {
       queries: {
         staleTime: 60 * 1000, // 1 minute
         refetchOnWindowFocus: true,
+        retry: 3,
       },
     },
   });

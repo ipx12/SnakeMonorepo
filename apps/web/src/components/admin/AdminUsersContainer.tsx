@@ -24,7 +24,7 @@ export interface AdminUsersContainerProps {
 
 export function AdminUsersContainer({ initialUser }: AdminUsersContainerProps = {}) {
   const { data: session, isPending: isAuthLoading } = useSession();
-  const user = initialUser || session?.user;
+  const user = session !== undefined ? session?.user : initialUser;
   const isAuthorizedAdmin = !!user && (user as { role?: string }).role === UserRole.Admin;
 
   const {

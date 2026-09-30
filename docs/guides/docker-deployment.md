@@ -59,7 +59,8 @@ You can override defaults by creating a `.env` file in the monorepo root or spec
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
 | `PORT` (API) | `3001` | Port inside the API container |
-| `DATABASE_URL` | `file:/app/data/sqlite.db` | Absolute path to SQLite database inside volume |
+| `DATABASE_URL` | `file:/app/data/sqlite.db` | Absolute path to SQLite database inside volume, or Turso URL (`libsql://...`) |
+| `TURSO_AUTH_TOKEN` | *(empty)* | Optional Turso Database authentication token |
 | `BETTER_AUTH_SECRET` | *(random demo secret)* | Secret key for Better Auth token encryption (change for production) |
 | `BETTER_AUTH_URL` | `http://localhost:3000` | Application root URL for Better Auth authentication callbacks |
 | `FRONTEND_URL` | `http://localhost:3000` | Allowed CORS origin for client requests |
