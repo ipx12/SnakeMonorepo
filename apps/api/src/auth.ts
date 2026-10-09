@@ -7,9 +7,15 @@ import path from 'node:path';
 import { runMigrationsToLatest } from './migrator';
 import { seedDemoUser } from './seed';
 
-// Ensure environment variables are loaded from root or local workspace
-dotenv.config();
-dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+// Safely load environment variables for local Node.js environments
+try {
+  dotenv.config();
+  if (typeof process !== 'undefined' && typeof process.cwd === 'function') {
+    dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+  }
+} catch {
+  // Dotenv loading is not required in Cloudflare Workers edge environment
+}
 
 // In automated test environments, use isolated local SQLite database to prevent
 // remote Turso network latency, rate limits, and parallel test data collisions.

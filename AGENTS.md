@@ -128,6 +128,14 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`), SSR prefetching (`serverFetch`), and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
 - **Deployment Documentation**: Complete guide in [`docs/guides/docker-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/docker-deployment.md).
 
+### 11. Cloudflare Workers & Serverless Edge Deployment
+
+- **Unified Edge Platform**: Full-stack serverless deployment on Cloudflare Edge without requiring persistent server processes or Docker containers.
+- **Hono API Worker (`apps/api`)**: Deployed as a native Cloudflare Worker via `src/worker.ts` with [`apps/api/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/api/wrangler.jsonc) (`nodejs_compat`, `nodejs_compat_populate_process_env`), maintaining 100% backward compatibility with Node.js `serve` (`src/index.ts`) and Vitest/Supertest integration suites. NPM scripts: `dev:worker`, `deploy`.
+- **Next.js OpenNext Bundle (`apps/web`)**: Deployed via `@opennextjs/cloudflare` adapter and [`apps/web/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/web/wrangler.jsonc), compiling Next.js App Router server functions into `.open-next/worker.js` and client static assets into `.open-next/assets` served by Cloudflare Workers Assets. NPM scripts: `build:worker`, `deploy`, `preview:worker`.
+- **Database Integration**: Direct edge communication with remote **Turso** (`libsql://...`) via `@libsql/client` and `@libsql/kysely-libsql` over HTTP/WebSockets, bypassing edge filesystem limitations.
+- **Deployment Documentation**: Complete guide in [`docs/guides/cloudflare-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/cloudflare-deployment.md).
+
 ## AGENTS.md & Documentation Maintenance Policy
 
 1. **Mandatory Post-Change Validation**: After ANY change (features, bugfixes, refactorings, tests, endpoints, dependencies, or configuration), ALWAYS check and validate the modifications against both `AGENTS.md` and the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory. Ensure that both files/folders accurately describe the changes and the current state of the project.
