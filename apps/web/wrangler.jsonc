@@ -9,5 +9,9 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "vars": {
+    "NEXT_PUBLIC_API_URL": "https://snakemonorepo.ipx12.workers.dev/api",
+    "INTERNAL_API_URL": "https://snakemonorepo.ipx12.workers.dev"
   }
 }

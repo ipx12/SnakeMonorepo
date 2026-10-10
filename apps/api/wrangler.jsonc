@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "snake-api",
+  "name": "snakemonorepo",
   "main": "src/worker.ts",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": [
@@ -8,6 +8,8 @@
     "nodejs_compat_populate_process_env"
   ],
   "vars": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "BETTER_AUTH_URL": "https://snakemonorepo.ipx12.workers.dev",
+    "DATABASE_URL": "libsql://tododb-sqldb.aws-eu-west-1.turso.io"
   }
 }
