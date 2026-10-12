@@ -10,8 +10,11 @@
   "vars": {
     "NODE_ENV": "production",
     "BETTER_AUTH_URL": "https://snakemonorepo.ipx12.workers.dev",
-    "DATABASE_URL": "libsql://tododb-sqldb.aws-eu-west-1.turso.io",
-    "previews": {
+    "DATABASE_URL": "libsql://tododb-sqldb.aws-eu-west-1.turso.io"
+  },
+  "previews": {
+    "vars": {
+      "NODE_ENV": "production",
       "ENVIRONMENT": "preview",
       "BETTER_AUTH_URL": "https://snakemonorepo-previews.ipx12.workers.dev",
       "DATABASE_URL": "libsql://tododb-previews.aws-eu-west-1.turso.io"
