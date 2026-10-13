@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { dispatchApiRequest } from '@/lib/api-fetch';
 
 const internalApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
 
@@ -16,7 +17,6 @@ async function proxyApiRequest(request: NextRequest, { params }: { params: Promi
 
   const forwardHeaders = new Headers();
   request.headers.forEach((headerValue, headerKey) => {
-    // Exclude host header to prevent Cloudflare edge routing poisoning
     if (headerKey.toLowerCase() !== 'host') {
       forwardHeaders.set(headerKey, headerValue);
     }
@@ -36,7 +36,7 @@ async function proxyApiRequest(request: NextRequest, { params }: { params: Promi
   }
 
   try {
-    const apiResponse = await fetch(targetUrl, {
+    const apiResponse = await dispatchApiRequest(targetUrl, {
       method: request.method,
       headers: forwardHeaders,
       body: requestBody,
@@ -44,9 +44,21 @@ async function proxyApiRequest(request: NextRequest, { params }: { params: Promi
     });
 
     const responseHeaders = new Headers();
-    apiResponse.headers.forEach((value, key) => {
-      responseHeaders.append(key, value);
+    apiResponse.headers.forEach((headerValue, headerKey) => {
+      if (headerKey.toLowerCase() !== 'set-cookie') {
+        responseHeaders.append(headerKey, headerValue);
+      }
     });
+
+    const setCookies = typeof apiResponse.headers.getSetCookie === 'function'
+      ? apiResponse.headers.getSetCookie()
+      : (apiResponse.headers.get('set-cookie') ? [apiResponse.headers.get('set-cookie')!] : []);
+
+    for (const cookieHeaderValue of setCookies) {
+      // Remove any explicit domain attribute so cookies default to snake-web origin
+      const sanitizedCookie = cookieHeaderValue.replace(/Domain=[^;]+;?\s*/gi, '');
+      responseHeaders.append('set-cookie', sanitizedCookie);
+    }
 
     return new NextResponse(apiResponse.body, {
       status: apiResponse.status,

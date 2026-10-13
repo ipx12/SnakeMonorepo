@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { type User } from '@snake/types';
+import { dispatchApiRequest } from '@/lib/api-fetch';
 
 /**
  * Server-side utility to securely fetch the current user's session 
@@ -25,12 +26,14 @@ export async function getServerSession(): Promise<{ user: User | null; session: 
       fetchHeaders.set('origin', origin);
     }
     
-    const apiUrl = process.env.INTERNAL_API_URL
-      ? `${process.env.INTERNAL_API_URL}/api`
-      : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
+    const baseApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
+    const apiUrl = `${baseApiUrl}/api`;
     
-    // Call the better-auth backend get-session endpoint
-    const response = await fetch(`${apiUrl}/auth/get-session`, {
+    // Explicitly set host header to target API host to satisfy Cloudflare edge routing
+    fetchHeaders.set('host', new URL(apiUrl).host);
+    
+    // Call the better-auth backend get-session endpoint via Service Binding
+    const response = await dispatchApiRequest(`${apiUrl}/auth/get-session`, {
       method: 'GET',
       headers: fetchHeaders,
       cache: 'no-store', // Important: don't cache session responses in Next.js Server Components

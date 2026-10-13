@@ -22,9 +22,10 @@ Client Browser ───────┼──> snake-web (.open-next / Next.js) 
 ```
 
 1. **Frontend (`apps/web`)**: Next.js App Router bundled via `@opennextjs/cloudflare` with static assets served via Cloudflare Workers Assets. Features a native API catch-all proxy (`src/app/api/[...path]/route.ts`) ensuring all client authentication and data requests operate on the same first-party origin, preventing cross-subdomain cookie drops on `*.workers.dev`.
-2. **Backend (`apps/api`)**: Modular Hono API exported as a native Cloudflare Worker (`src/worker.ts`), using `nodejs_compat` and Kysely with Libsql dialect.
-3. **Database**: Managed remote **Turso** database (`libsql://...`) accessed over HTTPS/WebSockets without requiring local disk storage.
-4. **Edge SSR Authentication Guard**: Server Components verify authentication sessions via `getServerSession()` forwarding incoming cookies to the API backend without mutating the target `Host` header (preventing Cloudflare 404 edge routing collisions).
+2. **Cloudflare Service Bindings (`dispatchApiRequest`)**: All requests from the Web worker to the Hono API worker are dispatched in-process via Cloudflare Service Bindings (`env.API` -> `snakemonorepo`), completely eliminating Cloudflare Error 1003 (`Direct IP access not allowed`).
+3. **Backend (`apps/api`)**: Modular Hono API exported as a native Cloudflare Worker (`src/worker.ts`), using `nodejs_compat` and Kysely with Libsql dialect.
+4. **Database**: Managed remote **Turso** database (`libsql://...`) accessed over HTTPS/WebSockets without requiring local disk storage.
+5. **Edge SSR Authentication Guard**: Server Components verify authentication sessions via `getServerSession()` forwarding incoming cookies to the API backend via Service Bindings.
 
 ---
 

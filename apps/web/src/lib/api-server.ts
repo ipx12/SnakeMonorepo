@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import type { Task, AdminUsersResponse, AdminUsersQueryParams } from '@snake/types';
+import { dispatchApiRequest } from '@/lib/api-fetch';
 
 export interface ServerFetchOptions {
   signal?: AbortSignal;
@@ -27,16 +28,18 @@ export async function serverFetch<T>(endpoint: string, options: ServerFetchOptio
     fetchHeaders.set('origin', origin);
   }
   
-  const apiUrl = process.env.INTERNAL_API_URL
-    ? `${process.env.INTERNAL_API_URL}/api`
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
+  const baseApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
+  const apiUrl = `${baseApiUrl}/api`;
+  
+  // Explicitly set host header to target API host to satisfy Cloudflare edge routing
+  fetchHeaders.set('host', new URL(apiUrl).host);
   
   const timeoutSignal = AbortSignal.timeout(5000);
   const combinedSignal = options.signal
     ? AbortSignal.any([options.signal, timeoutSignal])
     : timeoutSignal;
 
-  const response = await fetch(`${apiUrl}${endpoint}`, {
+  const response = await dispatchApiRequest(`${apiUrl}${endpoint}`, {
     method: 'GET',
     headers: fetchHeaders,
     cache: 'no-store',
