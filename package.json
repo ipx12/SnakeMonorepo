@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "packageManager": "npm@11.8.0",
-  "description": "Boilerplate Turborepo with Next.js and Express.js",
+  "description": "Turborepo with Next.js and Cloudflare Workers",
   "workspaces": [
     "apps/*",
     "packages/*"

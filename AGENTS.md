@@ -54,7 +54,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
   - **Services (`src/services/`)**: Business logic and database operations (`task.service.ts`, `admin.service.ts`).
   - **Middlewares (`src/middlewares/`)**: Reusable auth and validation handlers (`auth.middleware.ts`, `validate.middleware.ts`).
 - **Shared Types & Schemas (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces (`DatabaseSchema`), enums (`UserRole`), Zod schemas, API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
-- **Database & Migrations**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`), configured with `WAL` journal mode and `busy_timeout` to prevent locking. Managed via **Kysely Migrator** (`apps/api/src/migrator.ts`) with versioned migration files in `apps/api/src/migrations/` (`001_initial_schema.ts`) and separate seeding (`apps/api/src/seed.ts`). NPM scripts: `db:migrate`, `db:migrate:down`, `db:seed`.
+- **Database & Migrations**: Remote **Turso** (`libsql://...`) with cloud auth token in production/development, and isolated SQLite (`file:sqlite.db` / `file:test.db`) fallback using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`). Managed via **Kysely Migrator** (`apps/api/src/migrator.ts`) with versioned migration files in `apps/api/src/migrations/` (`001_initial_schema.ts`) and separate seeding (`apps/api/src/seed.ts`). NPM scripts: `db:migrate`, `db:migrate:down`, `db:seed`.
 - **Database Schema & Indices**:
   - `user`: User account details (`id`, `name`, `email`, `emailVerified`, `image`, `role`, `createdAt`, `updatedAt`).
   - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`). Index: `idx_session_userId` on `session(userId)`.
@@ -134,6 +134,15 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
   - `lint`: Validates code style and checks for ESLint violations (`npm run lint`).
   - `typecheck`: Runs TypeScript type checking (`npm run check-types` / `tsc --noEmit`) across `@snake/types`, `apps/api`, and `apps/web`.
   - `test`: Executes all 90 unit, integration, and UI component tests across workspaces (`npm run test`).
+
+### 11. Cloudflare Workers & Serverless Edge Deployment
+
+- **Unified Edge Platform**: Full-stack serverless deployment on Cloudflare Edge without requiring persistent server processes or Docker containers.
+- **Hono API Worker (`apps/api`)**: Deployed as a native Cloudflare Worker via `src/worker.ts` with [`apps/api/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/api/wrangler.jsonc) (`nodejs_compat`, `nodejs_compat_populate_process_env`), maintaining 100% backward compatibility with Node.js `serve` (`src/index.ts`) and Vitest/Supertest integration suites. NPM scripts: `dev:worker`, `deploy`.
+- **Next.js OpenNext Bundle (`apps/web`)**: Deployed via `@opennextjs/cloudflare` adapter and [`apps/web/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/web/wrangler.jsonc), compiling Next.js App Router server functions into `.open-next/worker.js` and client static assets into `.open-next/assets` served by Cloudflare Workers Assets. NPM scripts: `build:worker`, `deploy`, `preview:worker`.
+- **Database Integration**: Direct edge communication with remote **Turso** (`libsql://...`) via `@libsql/client` and `@libsql/kysely-libsql` over HTTP/WebSockets, bypassing edge filesystem limitations.
+- **CI/CD Automation**: Automated multi-stage deployment via GitHub Actions ([`.github/workflows/deploy.yml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/deploy.yml)) running Turborepo lint and all 90 unit/integration tests before deploying the API worker and Next.js Web worker (built on Ubuntu runner with OpenNext) using `cloudflare/wrangler-action@v3`.
+- **Deployment Documentation**: Complete guide in [`docs/guides/cloudflare-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/cloudflare-deployment.md).
 
 ## AGENTS.md & Documentation Maintenance Policy
 

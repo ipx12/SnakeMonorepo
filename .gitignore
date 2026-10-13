@@ -8,6 +8,8 @@ node_modules/
 
 # Build & Output directories
 .next/
+.open-next/
+.wrangler/
 out/
 dist/
 build/

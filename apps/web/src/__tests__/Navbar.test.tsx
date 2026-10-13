@@ -9,6 +9,9 @@ import { UserRole } from '@snake/types';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
 }));
 
 vi.mock('@/lib/auth-client', () => ({
