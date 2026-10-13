@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { type User } from '@snake/types';
+import { dispatchApiRequest } from '@/lib/api-fetch';
 
 /**
  * Server-side utility to securely fetch the current user's session 
@@ -11,23 +12,28 @@ export async function getServerSession(): Promise<{ user: User | null; session: 
     const nextCookies = await cookies();
     const nextHeaders = await headers();
     
-    // We forward the cookie header, and also the host/origin if needed
+    // We forward the cookie header to authenticate the session
     const fetchHeaders = new Headers();
-    fetchHeaders.set('cookie', nextCookies.toString());
+    const cookieHeader = nextCookies.toString();
+    if (cookieHeader) {
+      fetchHeaders.set('cookie', cookieHeader);
+    }
     
-    // better-auth uses origin/host headers for CSRF protection in some cases
+    // Better Auth uses origin header for CSRF protection. Do NOT forward client Host header to avoid Cloudflare 404.
     const host = nextHeaders.get('host');
-    if (host) fetchHeaders.set('host', host);
+    const origin = nextHeaders.get('origin') || (host ? (host.includes('localhost') ? `http://${host}` : `https://${host}`) : '');
+    if (origin) {
+      fetchHeaders.set('origin', origin);
+    }
     
-    const origin = nextHeaders.get('origin') || `http://${host}`;
-    if (origin) fetchHeaders.set('origin', origin);
+    const baseApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
+    const apiUrl = `${baseApiUrl}/api`;
     
-    const apiUrl = process.env.INTERNAL_API_URL
-      ? `${process.env.INTERNAL_API_URL}/api`
-      : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
+    // Explicitly set host header to target API host to satisfy Cloudflare edge routing
+    fetchHeaders.set('host', new URL(apiUrl).host);
     
-    // Call the better-auth backend get-session endpoint
-    const response = await fetch(`${apiUrl}/auth/get-session`, {
+    // Call the better-auth backend get-session endpoint via Service Binding
+    const response = await dispatchApiRequest(`${apiUrl}/auth/get-session`, {
       method: 'GET',
       headers: fetchHeaders,
       cache: 'no-store', // Important: don't cache session responses in Next.js Server Components
