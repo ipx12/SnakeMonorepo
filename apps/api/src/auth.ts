@@ -1,10 +1,33 @@
 import { betterAuth } from 'better-auth';
-import { Kysely, sql } from 'kysely';
+import { Kysely } from 'kysely';
 import { LibsqlDialect } from '@libsql/kysely-libsql';
+import { DatabaseSchema } from '@snake/types';
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { runMigrationsToLatest } from './migrator';
+import { seedDemoUser } from './seed';
 
-export const db = new Kysely<any>({
+// Safely load environment variables for local Node.js environments
+try {
+  dotenv.config();
+  if (typeof process !== 'undefined' && typeof process.cwd === 'function') {
+    dotenv.config({ path: path.resolve(process.cwd(), '../../.env') });
+  }
+} catch {
+  // Dotenv loading is not required in Cloudflare Workers edge environment
+}
+
+// In automated test environments, use isolated local SQLite database to prevent
+// remote Turso network latency, rate limits, and parallel test data collisions.
+const isTestEnvironment = process.env.NODE_ENV === 'test';
+const databaseUrl = isTestEnvironment
+  ? 'file:test.db'
+  : (process.env.DATABASE_URL || 'file:sqlite.db');
+
+export const db = new Kysely<DatabaseSchema>({
   dialect: new LibsqlDialect({
-    url: 'file:sqlite.db',
+    url: databaseUrl,
+    authToken: isTestEnvironment ? undefined : process.env.TURSO_AUTH_TOKEN,
   }),
 });
 
@@ -28,95 +51,25 @@ export const auth = betterAuth({
   },
   secret: process.env.BETTER_AUTH_SECRET || 'default_secret_key_change_in_production_123',
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
-  trustedOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  trustedOrigins: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    'https://snake-web.ipx12.workers.dev',
+  ],
 });
 
-// Auto-initialize required Better Auth tables and seed demo user in SQLite
-async function initDb() {
+/**
+ * Initialize database schema via Kysely Migrator and seed initial demo data.
+ */
+export async function initDb(): Promise<void> {
   try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS user (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        emailVerified INTEGER NOT NULL DEFAULT 0,
-        image TEXT,
-        role TEXT NOT NULL DEFAULT 'user',
-        createdAt INTEGER NOT NULL,
-        updatedAt INTEGER NOT NULL
-      );
-    `.execute(db);
-
-    try {
-      await sql`ALTER TABLE user ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`.execute(db);
-    } catch {
-      // Column already exists
-    }
-
-    await sql`
-      CREATE TABLE IF NOT EXISTS session (
-        id TEXT PRIMARY KEY,
-        expiresAt INTEGER NOT NULL,
-        token TEXT NOT NULL UNIQUE,
-        createdAt INTEGER NOT NULL,
-        updatedAt INTEGER NOT NULL,
-        ipAddress TEXT,
-        userAgent TEXT,
-        userId TEXT NOT NULL,
-        FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
-      );
-    `.execute(db);
-
-    await sql`
-      CREATE TABLE IF NOT EXISTS account (
-        id TEXT PRIMARY KEY,
-        accountId TEXT NOT NULL,
-        providerId TEXT NOT NULL,
-        userId TEXT NOT NULL,
-        accessToken TEXT,
-        refreshToken TEXT,
-        idToken TEXT,
-        accessTokenExpiresAt INTEGER,
-        refreshTokenExpiresAt INTEGER,
-        scope TEXT,
-        password TEXT,
-        createdAt INTEGER NOT NULL,
-        updatedAt INTEGER NOT NULL,
-        FOREIGN KEY (userId) REFERENCES user(id) ON DELETE CASCADE
-      );
-    `.execute(db);
-
-    await sql`
-      CREATE TABLE IF NOT EXISTS verification (
-        id TEXT PRIMARY KEY,
-        identifier TEXT NOT NULL,
-        value TEXT NOT NULL,
-        expiresAt INTEGER NOT NULL,
-        createdAt INTEGER,
-        updatedAt INTEGER
-      );
-    `.execute(db);
-
-    console.log('[Better Auth] Database schema verified successfully.');
-
-    // Seed demo user if it doesn't exist yet
-    const existingUser = await sql`SELECT id FROM user WHERE email = 'demo@watermelon.ui'`.execute(db);
-    if (!existingUser.rows.length) {
-      await auth.api.signUpEmail({
-        body: {
-          email: 'demo@watermelon.ui',
-          password: 'password123',
-          name: 'Demo Admin',
-          role: 'admin',
-        },
-      });
-      console.log('[Better Auth] Pre-created demo admin user (demo@watermelon.ui / password123).');
-    } else {
-      await sql`UPDATE user SET role = 'admin' WHERE email = 'demo@watermelon.ui'`.execute(db);
-    }
-  } catch (err) {
-    console.error('[Better Auth] Failed to initialize database schema or seed demo user:', err);
+    await runMigrationsToLatest(db);
+    await seedDemoUser(db);
+    console.log('[Database Init] Migrations applied and demo user verified.');
+    } catch (error) {
+    console.error('[Database Init] Failed to run migrations or seed database:', error);
+    throw error;
   }
 }
 
-initDb();

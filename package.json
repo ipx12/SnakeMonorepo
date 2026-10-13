@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "packageManager": "npm@11.8.0",
-  "description": "Boilerplate Turborepo with Next.js and Express.js",
+  "description": "Turborepo with Next.js and Cloudflare Workers",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,10 +11,13 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "test": "turbo run test",
     "lint": "turbo run lint",
+    "check-types": "turbo run check-types",
+    "typecheck": "turbo run check-types",
     "clean": "turbo run clean"
   },
   "devDependencies": {
-    "turbo": "^2.0.4"
+    "turbo": "^2.10.11"
   }
 }
