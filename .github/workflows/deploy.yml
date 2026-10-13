@@ -81,7 +81,7 @@ jobs:
       - name: Build Next.js OpenNext Bundle
         run: npm --workspace=web run build:worker
         env:
-          NEXT_PUBLIC_API_URL: https://snakemonorepo.ipx12.workers.dev/api
+          NEXT_PUBLIC_API_URL: /api
           INTERNAL_API_URL: https://snakemonorepo.ipx12.workers.dev
 
       - name: Deploy Web Worker to Cloudflare

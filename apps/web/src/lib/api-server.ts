@@ -15,13 +15,17 @@ export async function serverFetch<T>(endpoint: string, options: ServerFetchOptio
   const nextHeaders = await headers();
   
   const fetchHeaders = new Headers();
-  fetchHeaders.set('cookie', nextCookies.toString());
+  const cookieHeader = nextCookies.toString();
+  if (cookieHeader) {
+    fetchHeaders.set('cookie', cookieHeader);
+  }
   
+  // Set origin header for backend verification without breaking Cloudflare Host routing
   const host = nextHeaders.get('host');
-  if (host) fetchHeaders.set('host', host);
-  
-  const origin = nextHeaders.get('origin') || (host ? `http://${host}` : '');
-  if (origin) fetchHeaders.set('origin', origin);
+  const origin = nextHeaders.get('origin') || (host ? (host.includes('localhost') ? `http://${host}` : `https://${host}`) : '');
+  if (origin) {
+    fetchHeaders.set('origin', origin);
+  }
   
   const apiUrl = process.env.INTERNAL_API_URL
     ? `${process.env.INTERNAL_API_URL}/api`

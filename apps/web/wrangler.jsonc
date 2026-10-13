@@ -11,12 +11,12 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "NEXT_PUBLIC_API_URL": "https://snakemonorepo.ipx12.workers.dev/api",
+    "NEXT_PUBLIC_API_URL": "/api",
     "INTERNAL_API_URL": "https://snakemonorepo.ipx12.workers.dev"
   },
   "previews": {
     "vars": {
-      "NEXT_PUBLIC_API_URL": "https://snakemonorepo-previews.ipx12.workers.dev/api",
+      "NEXT_PUBLIC_API_URL": "/api",
       "INTERNAL_API_URL": "https://snakemonorepo-previews.ipx12.workers.dev"
     }
   }

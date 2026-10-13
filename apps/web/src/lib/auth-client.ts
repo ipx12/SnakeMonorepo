@@ -7,9 +7,9 @@ import { createAuthClient } from 'better-auth/react';
  */
 const authenticationBaseUrl =
   process.env.NEXT_PUBLIC_AUTH_URL ||
-  (process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api$/, '')
-    : 'http://localhost:3001');
+  (typeof window !== 'undefined'
+    ? window.location.origin
+    : (process.env.INTERNAL_API_URL || 'http://localhost:3001'));
 
 export const authClient = createAuthClient({
   baseURL: authenticationBaseUrl,
