@@ -1,168 +1,127 @@
-import { authClient } from './auth-client';
-import { UserRole } from './roles';
-export { UserRole };
+import {
+  UserRole,
+  type User,
+  type AuthResponse,
+  type RegisterPayload,
+  type LoginPayload,
+  type Task,
+  type AdminUserDetail,
+  type PaginationMeta,
+  type AdminUsersResponse,
+  type AdminUsersQueryParams,
+} from '@snake/types';
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  createdAt: string;
-}
+export {
+  UserRole,
+  type User,
+  type AuthResponse,
+  type RegisterPayload,
+  type LoginPayload,
+  type Task,
+  type AdminUserDetail,
+  type PaginationMeta,
+  type AdminUsersResponse,
+  type AdminUsersQueryParams,
+};
 
-export interface AuthResponse {
-  token?: string;
-  user: User;
-}
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const TASKS_API_URL = `${BASE_URL}/tasks`;
 
-export interface RegisterPayload {
-  name: string;
-  email: string;
-  password: string;
-  role?: UserRole;
-}
-
-export interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-export interface Item {
-  id: string;
-  title: string;
-  description: string;
-  completed: boolean;
-  userId?: string;
-  createdAt: string;
-}
-
-const BASE_URL = 'http://localhost:3001/api';
-const API_URL = `${BASE_URL}/items`;
-
-// Authentication API calls via Better Auth
-export async function registerUser(payload: RegisterPayload): Promise<AuthResponse> {
-  const { data, error } = await authClient.signUp.email({
-    email: payload.email,
-    password: payload.password,
-    name: payload.name,
-    role: payload.role || UserRole.User,
-  } as any);
-
-  if (error || !data?.user) {
-    throw new Error(error?.message || 'Failed to register account');
-  }
-
-  const user: User = {
-    id: data.user.id,
-    name: data.user.name || '',
-    email: data.user.email,
-    role: (data.user as any).role || payload.role || UserRole.User,
-    createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
-  };
-
-  return { user };
-}
-
-export async function loginUser(payload: LoginPayload): Promise<AuthResponse> {
-  const { data, error } = await authClient.signIn.email({
-    email: payload.email,
-    password: payload.password,
-  });
-
-  if (error || !data?.user) {
-    throw new Error(error?.message || 'Failed to login');
-  }
-
-  const user: User = {
-    id: data.user.id,
-    name: data.user.name || '',
-    email: data.user.email,
-    role: (data.user as any).role || UserRole.User,
-    createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
-  };
-
-  return { user };
-}
-
-export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const { data } = await authClient.getSession();
-    if (!data?.user) return null;
-
-    return {
-      id: data.user.id,
-      name: data.user.name || '',
-      email: data.user.email,
-      role: (data.user as any).role || UserRole.User,
-      createdAt: data.user.createdAt ? data.user.createdAt.toString() : new Date().toISOString(),
-    };
-  } catch {
-    return null;
-  }
-}
-
-export async function logoutUser(): Promise<void> {
-  try {
-    await authClient.signOut();
-  } catch {
-    // Ignore network errors during logout
-  }
-}
-
-// Items API calls
-export async function getItems(): Promise<Item[]> {
-  const apiResponse = await fetch(API_URL, { credentials: 'include' });
-  if (!apiResponse.ok) throw new Error('Failed to fetch items');
+/**
+ * Fetches all tasks belonging to the currently authenticated user.
+ *
+ * @param signal - Optional AbortSignal for request cancellation
+ * @returns Array of Task items owned by the authenticated user
+ * @throws {Error} If authentication session is missing or server returns non-200
+ */
+export async function getTasks(signal?: AbortSignal): Promise<Task[]> {
+  const apiResponse = await fetch(TASKS_API_URL, { credentials: 'include', signal });
+  if (!apiResponse.ok) throw new Error('Failed to fetch tasks');
   return apiResponse.json();
 }
 
-export async function createItem(title: string, description: string): Promise<Item> {
-  const apiResponse = await fetch(API_URL, {
+/**
+ * Creates and persists a new task for the authenticated user.
+ *
+ * @param title - Task title (must not be empty)
+ * @param description - Detailed description or notes for the task
+ * @returns The newly created Task object with assigned id and timestamp
+ * @throws {Error} If title is empty or creation fails on the server
+ */
+export async function createTask(title: string, description: string): Promise<Task> {
+  const apiResponse = await fetch(TASKS_API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title, description }),
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to create item');
+  if (!apiResponse.ok) throw new Error('Failed to create task');
   return apiResponse.json();
 }
 
-export async function updateItem(itemId: string, updates: Partial<Omit<Item, 'id' | 'createdAt'>>): Promise<Item> {
-  const apiResponse = await fetch(`${API_URL}/${itemId}`, {
+/**
+ * Updates an existing task by its ID.
+ *
+ * @param taskId - Unique identifier of the task to update
+ * @param updates - Partial fields to update (`title`, `description`, `completed`)
+ * @returns The updated Task entity
+ * @throws {Error} If task does not exist, belongs to another user (403), or update fails
+ */
+export async function updateTask(
+  taskId: string,
+  updates: Partial<Omit<Task, 'id' | 'createdAt'>>
+): Promise<Task> {
+  const apiResponse = await fetch(`${TASKS_API_URL}/${taskId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates),
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to update item');
+  if (!apiResponse.ok) throw new Error('Failed to update task');
   return apiResponse.json();
 }
 
-export async function deleteItem(itemId: string): Promise<void> {
-  const apiResponse = await fetch(`${API_URL}/${itemId}`, {
+/**
+ * Permanently deletes a task by ID.
+ *
+ * @param taskId - Unique identifier of the task to delete
+ * @throws {Error} If user does not own the task or deletion fails
+ */
+export async function deleteTask(taskId: string): Promise<void> {
+  const apiResponse = await fetch(`${TASKS_API_URL}/${taskId}`, {
     method: 'DELETE',
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to delete item');
+  if (!apiResponse.ok) throw new Error('Failed to delete task');
 }
 
-export interface AdminUserDetail {
-  id: string;
-  name: string;
-  email: string;
-  emailVerified: boolean;
-  image: string | null;
-  role: UserRole;
-  createdAt: string;
-  updatedAt: string;
-}
+/**
+ * Fetches paginated user records with search filtering for Admin users.
+ *
+ * @param queryParams - Pagination parameters (`page`, `limit`) and search query string
+ * @param signal - Optional AbortSignal for query cancellation
+ * @returns Paginated list of users accompanied by total count metadata
+ * @throws {Error} If user is unauthenticated (401) or lacks the Admin role (403)
+ *
+ * @example
+ * const { users, pagination } = await getAdminUsers({ page: 1, limit: 10, search: 'alex' });
+ */
+export async function getAdminUsers(
+  queryParams?: AdminUsersQueryParams,
+  signal?: AbortSignal
+): Promise<AdminUsersResponse> {
+  const urlSearchParams = new URLSearchParams();
+  if (queryParams?.page !== undefined) urlSearchParams.set('page', String(queryParams.page));
+  if (queryParams?.limit !== undefined) urlSearchParams.set('limit', String(queryParams.limit));
+  if (queryParams?.search) urlSearchParams.set('search', queryParams.search);
 
-export async function getAdminUsers(): Promise<AdminUserDetail[]> {
-  const apiResponse = await fetch(`${BASE_URL}/admin/users`, { credentials: 'include' });
+  const queryString = urlSearchParams.toString();
+  const requestUrl = queryString ? `${BASE_URL}/admin/users?${queryString}` : `${BASE_URL}/admin/users`;
+
+  const apiResponse = await fetch(requestUrl, { credentials: 'include', signal });
   if (!apiResponse.ok) {
     const errorResponseData = await apiResponse.json().catch(() => ({}));
     throw new Error(errorResponseData.message || 'Failed to fetch users list');
   }
   return apiResponse.json();
 }
-

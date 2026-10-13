@@ -8,6 +8,8 @@ node_modules/
 
 # Build & Output directories
 .next/
+.open-next/
+.wrangler/
 out/
 dist/
 build/
@@ -15,6 +17,8 @@ build/
 # SQLite & Local Databases
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
@@ -39,6 +43,7 @@ lerna-debug.log*
 # Testing & Coverage
 coverage/
 .nyc_output/
+.playwright-mcp/
 
 # TypeScript
 *.tsbuildinfo

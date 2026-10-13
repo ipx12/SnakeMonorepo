@@ -1,48 +1,156 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 # SnakeMonorepo AGENTS.md
 
 ## Project Overview
-Monorepo containing Next.js frontend (`apps/web`) and Express backend (`apps/api`).
+
+Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 
 ## Key Technologies & Conventions
 
 ### 1. UI Library & Styling
-- **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives & Tailwind CSS v4 located in `src/components/ui/`).
+
+- **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives, Sonner & Tailwind CSS v4 located in `src/components/ui/` — including `Button`, `Input`, `Textarea`, `Checkbox`, `Sonner`, and `Table`).
+- **Table Primitive**: Component set in [`apps/web/src/components/ui/table.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/ui/table.tsx) (`Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption`) used across data displays like `/admin/users`.
 - **Design Aesthetic**: Premium dark mode, glassmorphism, subtle micro-animations, and vibrant gradients.
+- **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, and action buttons.
+- **Animation Platform**: **GSAP** (`gsap`) and **GSAP React** (`@gsap/react`). Used for high-performance 60fps micro-interactions, scoped timelines, and smooth state transitions:
+  - **Scoped Lifecycle & Cleanup**: Always register `gsap.registerPlugin(useGSAP)` and scope animations via `useGSAP(..., { scope: containerRef })` to ensure automatic cleanup and React 19 StrictMode compatibility.
+  - **Safe Interaction Handlers**: Wrap interactive user callbacks (mouse move/leave, deletion) in `contextSafe()` to guarantee automatic garbage collection and prevent memory leaks.
+  - **UX-First Interactive Cards**: Keep interactive cards (such as `AuthStatusCard.tsx`) physically stationary without 3D tilt/rotation so action buttons never displace under the cursor. Use ambient cursor spotlights (`radial-gradient`), breathing aura pulses, and non-displacing effects.
+  - **Selective List Animation (ID-based Targeting)**: In dynamic lists (`TaskList.tsx`), run staggered reveals only on initial load or refresh. When adding new tasks, decouple the animation from DOM ordering constraints by using a `Set` to track previous IDs and selecting the new elements via `data-task-id` attributes to animate them independently.
 
 ### 2. Authentication & Authorization (RBAC)
+
 - **Auth Provider**: **Better Auth** (`better-auth`).
-- **Frontend Client**: `authClient` from [`src/lib/auth-client.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-client.ts) consumed via [`AuthContext`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/AuthContext.tsx).
-- **Backend Auth Endpoint**: Express API mounted at `http://localhost:3001/api/auth/*`.
+- **Frontend Client**: `authClient` from [`src/lib/auth-client.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-client.ts) consumed via native hooks (`useSession`, `signIn`, `signUp`).
+- **Backend Auth Endpoint**: Hono API mounted at `http://localhost:3001/api/auth/*`.
 - **Default Demo Account**: `demo@watermelon.ui` / `password123`.
 - **Role-Based Access Control (RBAC)**: User roles defined in [`src/lib/roles.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/roles.ts) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`).
 - **Admin Dashboard**: Route `/admin/users` for administrators to view, search, and manage user accounts and session details.
+- **Server-Side Route Protection (SSR Guard)**: Server Component session verification and authorization implemented via [`src/lib/auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts) (`getServerSession()`). Forwards incoming Next.js cookies and headers to the backend with `cache: 'no-store'` and an `AbortSignal.timeout(5000)` safeguard. Eliminates layout flashing (Zero Layout Flash) and bundle exposure prior to client hydration.
+- **RSC to Client Hydration**: Route pages (`page.tsx`) act as lightweight Server Components that perform authorization checks and pass pre-validated user models (`initialUser`) down to client containers (`AdminUsersContainer`), avoiding redundant client session roundtrips.
 
-### 3. Forms & Validation
+### 3. Forms & Shared Validation Layer (End-to-End Zod)
+
 - **Form State Management**: **React Hook Form** (`react-hook-form`).
 - **Schema Validation**: **Zod** (`zod`).
-- **Schema Resolver**: `@hookform/resolvers/zod` (`zodResolver`).
+- **Shared Validation Schemas**: Centralized in `@snake/types` (`loginSchema`, `registerSchema`, `createTaskSchema`, `updateTaskSchema`, `taskIdParamSchema`, `adminUsersQuerySchema`).
+- **Backend Request Validation**: Hono validation middleware (`validateRequestBody`, `validateRequestQuery`, `validateRequestParams` wrapping `@hono/zod-validator`) leveraging shared Zod schemas.
+- **Frontend Schema Resolver**: `@hookform/resolvers/zod` (`zodResolver`).
 
-### 4. Monorepo Architecture & Database
-- **Frontend (`apps/web`)**: Next.js App Router on Port 3000.
-- **Backend (`apps/api`)**: Express server on Port 3001 (`/api/admin/users` for admin endpoints).
-- **Database**: SQLite (`file:sqlite.db`) using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`).
+### 4. Monorepo Architecture, Database & Optimization
 
-### 5. Directory Structure Conventions
-- `apps/web/src/app/`: Next.js pages, layouts, and routes (`/`, `/login`, `/register`, `/admin/users`).
-- `apps/web/src/components/`: Visual UI components (`components/ui` for primitives, `components/dashboard` for feature widgets).
-- `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), authentication client (`auth-client.ts`), and helper utilities.
-- `apps/api/src/`: Express backend code, database connections, and routes.
+- **Frontend (`apps/web`)**: Next.js App Router on Port 3000 with Optimistic UI updates and Debounced Search.
+- **Backend (`apps/api`)**: Layered Hono server on Port 3001:
+  - **Routes (`src/routes/`)**: Route definitions and middleware binding (`task.routes.ts`, `admin.routes.ts`).
+  - **Controllers (`src/controllers/`)**: HTTP request/response handlers (`task.controller.ts`, `admin.controller.ts`).
+  - **Services (`src/services/`)**: Business logic and database operations (`task.service.ts`, `admin.service.ts`).
+  - **Middlewares (`src/middlewares/`)**: Reusable auth and validation handlers (`auth.middleware.ts`, `validate.middleware.ts`).
+- **Shared Types & Schemas (`packages/types`)**: Package `@snake/types` containing shared TypeScript interfaces (`DatabaseSchema`), enums (`UserRole`), Zod schemas, API payloads, and pagination models (`PaginationMeta`, `AdminUsersResponse`, `AdminUsersQueryParams`).
+- **Database & Migrations**: Remote **Turso** (`libsql://...`) with cloud auth token in production/development, and isolated SQLite (`file:sqlite.db` / `file:test.db`) fallback using **Kysely** query builder with **Libsql Dialect** (`@libsql/kysely-libsql`). Managed via **Kysely Migrator** (`apps/api/src/migrator.ts`) with versioned migration files in `apps/api/src/migrations/` (`001_initial_schema.ts`) and separate seeding (`apps/api/src/seed.ts`). NPM scripts: `db:migrate`, `db:migrate:down`, `db:seed`.
+- **Database Schema & Indices**:
+  - `user`: User account details (`id`, `name`, `email`, `emailVerified`, `image`, `role`, `createdAt`, `updatedAt`).
+  - `session`: User authentication sessions (`id`, `token`, `expiresAt`, `userId`). Index: `idx_session_userId` on `session(userId)`.
+  - `account`: User authentication credentials and provider tokens (`id`, `accountId`, `providerId`, `userId`, `password`, `createdAt`, `updatedAt`).
+  - `verification`: Better Auth token verifications (`id`, `identifier`, `value`, `expiresAt`).
+  - `task`: User task dashboard items (`id`, `title`, `description`, `completed`, `userId`, `createdAt`). Index: `idx_task_userId` on `task(userId)`.
+- **Query Optimization**: Secure `crypto.randomUUID()` identifier generation, and SQL-level server-side pagination & filtering for `/api/admin/users`.
 
-### 6. Code Naming Conventions
+### 5. Testing Infrastructure & Strategy
+
+- **Test Runner**: **Vitest** for both `apps/web` and `apps/api`.
+- **API Integration Testing**: **Supertest** for testing Hono endpoints in `apps/api` without running network ports using `@hono/node-server` ([`tasks.test.ts`](file:///d:/WEB/SnakeMonorepo/apps/api/src/__tests__/tasks.test.ts)) covering tasks CRUD, ownership isolation, 403 Forbidden checks, and admin privileges.
+- **Service Layer Unit Testing**: Direct database and business logic testing in `apps/api/src/__tests__/services.test.ts`.
+- **Zod Schema Unit Testing**: Validation edge cases testing in `apps/web/src/__tests__/schemas.test.ts`.
+- **UI & Component Testing**: **React Testing Library** (`@testing-library/react`, `@testing-library/jest-dom`) with `jsdom` for `apps/web` component integration tests:
+  - Navigation & Session: [`Navbar.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/Navbar.test.tsx) for guest/user/admin views and sign out cache invalidation.
+  - Authentication Forms: [`LoginForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/LoginForm.test.tsx) and [`RegisterForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/RegisterForm.test.tsx) for validation, demo auto-fill, and submission handlers.
+  - Dashboard: [`TaskList.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/TaskList.test.tsx) for task rendering, completion toggles, and inline editing workflows.
+  - Page Route Hydration: [`pages.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/pages.test.tsx) for SSR hydration and route access.
+- **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
+- **Admin UI Component Testing**: Integration tests in [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx) testing access controls, stats cards, user rows, search filtering, and pagination navigation.
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 90 unit & integration tests across workspaces (25 in `apps/api`, 65 in `apps/web`).
+
+### 6. Directory Structure Conventions
+
+- `apps/web/src/app/`: Next.js Server Component pages, layouts, and route handlers (`/`, `/login`, `/register`, `/admin/users`).
+- `apps/web/src/components/`: Visual UI components:
+  - `components/ui/`: Watermelon UI design primitives (`Button`, `Input`, `Table`, etc.).
+  - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)).
+  - `components/admin/`: Modular admin user management view: orchestrator ([`AdminUsersContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/admin/AdminUsersContainer.tsx)), header (`AdminHeader.tsx`), metric cards (`AdminStatsGrid.tsx`), search/page-size toolbar (`AdminUsersToolbar.tsx`), table view (`AdminUsersTable.tsx`), row component (`AdminUserRow.tsx`), expanded metadata/JSON viewer (`AdminUserDetails.tsx`), pagination bar (`AdminPagination.tsx`), access denied guard (`AccessDeniedCard.tsx`), and loading skeleton (`AdminLoadingSkeleton.tsx`).
+  - `components/auth/`: Interactive client authentication forms ([`LoginForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/LoginForm.tsx), [`RegisterForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/RegisterForm.tsx)).
+- `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.
+- `apps/api/src/migrations/`: Versioned database migration definitions (`001_initial_schema.ts`).
+- `apps/api/src/scripts/`: Database management CLI scripts (`migrate.ts`, `seed.ts`).
+- `apps/api/src/controllers/`: Hono route controllers.
+- `apps/api/src/services/`: Database and business logic operations.
+- `apps/api/src/routes/`: Hono modular route definitions.
+- `apps/api/src/middlewares/`: Hono authentication and validation middlewares.
+- `packages/types/`: Shared TypeScript models, interfaces, and Zod schemas (`@snake/types`).
+
+### 7. Code Naming & Strict Typing Conventions
+
 - **Semantic Naming**: All variable names, parameters, functions, and state values MUST be self-descriptive and semantic (e.g. `taskList`, `isTasksLoading`, `newTaskTitle`, `editingTask`, `errorMessage`, `event`, `targetTask`, `taskId`). Avoid single-letter variables (like `u`, `q`, `e`, `i`, `val`) or non-descriptive names (like `data`, `res`, `items`, `loading`, `error`).
+- **Zero `any` Standard**: Usage of `any` is strictly prohibited across services, controllers, and utility layers. All database rows must leverage strongly-typed Kysely schemas (`Selectable<Table>`), and request payloads must utilize shared Zod inferred types (`CreateTaskPayload`, `AdminUsersQueryParams`).
+- **JSDoc / TSDoc Documentation Standard**: All service functions (`services/*.ts`), API client methods (`lib/api.ts`), custom hooks (`hooks/*.ts`), and Zod schemas (`packages/types`) MUST be documented with standard JSDoc/TSDoc annotations (`@param`, `@returns`, `@throws`, `@example`).
 
-## AGENTS.md Maintenance Policy
-1. **Automated Documentation**: Whenever new technologies, routes, endpoints, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
-2. **User Confirmation Prompt**: Always ask the user if newly introduced technologies or features should be added to `AGENTS.md`.
-3. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
+### 8. Responsive Design & Mobile-First Standard (320px+)
+
+- **Baseline Viewport**: All UI components and layouts must support mobile viewports starting from a minimum width of **320px** without horizontal scroll (`scrollWidth <= innerWidth`), content clipping, or broken layouts.
+- **Tailwind Breakpoints Standard**: Always use standard Tailwind CSS v4 breakpoint modifiers (`sm:` 640px+, `md:` 768px+, `lg:` 1024px+, `xl:` 1280px+). Do NOT use non-standard modifiers (such as `xs:`).
+- **Layout Constraints**: Use fluid typography (`text-2xl sm:text-4xl`), responsive padding (`px-3 sm:px-6`), `min-w-0` on flex children, and isolated `overflow-x-auto` for wide components (tables/code blocks).
+- **Verification**: When introducing new pages or major UI sections, verify responsive integrity across 320px, 768px, and 1280px viewports using Playwright or browser checks.
+
+### 9. Server State Management (TanStack Query v5)
+
+- **Mandatory MCP Documentation Verification**: When creating, refactoring, or troubleshooting any TanStack Query functionality (hooks, queryOptions, SSR hydration, persisters, devtools), always query the `tanstack-query-docs` MCP server (`search_query_documentation`, `fetch_query_documentation`, `search_query_code`) to ensure patterns strictly align with the latest official TanStack documentation and breaking changes are avoided.
+- **Architecture & Providers**: `@tanstack/react-query` v5 with `@tanstack/react-query-devtools` wrapped in [`QueryProvider`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/providers/query-provider.tsx) in the root layout with `staleTime: 60s`. Utilizes the official Next.js App Router singleton factory pattern (`getQueryClient()`) with a `browserQueryClient` instance and `isServer` guard (avoiding `useState` to prevent cache destruction during React `Suspense` initial render cycles).
+- **Query Key Factories**: Centralized in `@snake/types` (`taskKeys`, `adminUserKeys`) following hierarchical array conventions.
+- **Reusable Query Options**: Centralized in [`apps/web/src/lib/query-options.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/query-options.ts) (`tasksQueryOptions`, `adminUsersQueryOptions`) using TanStack's `queryOptions` helper with `AbortSignal` propagation.
+- **Custom Encapsulated Hooks**: All server state data access must be encapsulated in reusable hooks in `apps/web/src/hooks/`:
+  - [`useTasks`](file:///d:/WEB/SnakeMonorepo/apps/web/src/hooks/use-tasks.ts): Queries, mutations, and optimistic updates with rollback (`onMutate`, `onError`, `onSettled`).
+  - [`useAdminUsers`](file:///d:/WEB/SnakeMonorepo/apps/web/src/hooks/use-admin-users.ts): Paginated & debounced (300ms) user queries with `placeholderData: keepPreviousData`.
+- **Server-Side Rendering (SSR) Prefetching**: Server Components (`app/page.tsx`, `app/admin/users/page.tsx`) execute prefetching with an isolated `new QueryClient()` instance per component (as officially recommended by TanStack to avoid query cross-serialization bloat) via `await queryClient.query({ queryKey, queryFn }).catch(noop)` with `<HydrationBoundary state={dehydrate(queryClient)}>`.
+- **Session Cache Isolation**: `queryClient.clear()` is invoked on logout in [`Navbar.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/Navbar.tsx) to prevent cross-session cache persistence.
+
+### 10. Containerization & Docker Orchestration
+
+- **Docker Compose Stack**: Root [`docker-compose.yml`](file:///d:/WEB/SnakeMonorepo/docker-compose.yml) orchestrating `snake-web` (port 3000), `snake-api` (port 3001), and a persistent named volume `snake_sqlite_data` mounted at `/app/data`. Uses `init: true` for PID 1 signal management and container healthcheck coordination (`service_healthy`).
+- **API Multi-Stage Build**: [`apps/api/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/api/Dockerfile) based on `node:22-alpine` with an unprivileged system user `honojs`, preconfigured for `DATABASE_URL=file:/app/data/sqlite.db`. Includes `/api/health` endpoint and `SIGTERM`/`SIGINT` graceful shutdown handlers.
+- **Web Multi-Stage Build**: [`apps/web/Dockerfile`](file:///d:/WEB/SnakeMonorepo/apps/web/Dockerfile) based on `node:22-alpine` utilizing Next.js `output: 'standalone'` mode (reducing image footprint to ~150MB) and unprivileged `nextjs` system user. Injects `INTERNAL_API_URL` during build stage for static rewrite baking.
+- **Docker Network Communication**: Internal service discovery via `INTERNAL_API_URL=http://api:3001` for Server-Side Route Protection (`getServerSession()`), SSR prefetching (`serverFetch`), and Next.js rewrites, with public client requests directed to `http://localhost:3001/api`.
+### 11. Continuous Integration (GitHub Actions)
+
+- **Workflow Pipeline**: Centralized GitHub Actions workflow located in [`.github/workflows/ci.yaml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/ci.yaml) running on `ubuntu-latest` with Node.js 22.
+- **Triggers & Concurrency**: Triggered on push and pull requests targeting `main` and `develop` branches. Uses workflow-level concurrency cancellation (`cancel-in-progress: true`) for outdated runs.
+- **Verification Jobs**:
+  - `lint`: Validates code style and checks for ESLint violations (`npm run lint`).
+  - `typecheck`: Runs TypeScript type checking (`npm run check-types` / `tsc --noEmit`) across `@snake/types`, `apps/api`, and `apps/web`.
+  - `test`: Executes all 90 unit, integration, and UI component tests across workspaces (`npm run test`).
+
+### 11. Cloudflare Workers & Serverless Edge Deployment
+
+- **Unified Edge Platform**: Full-stack serverless deployment on Cloudflare Edge without requiring persistent server processes or Docker containers.
+- **Hono API Worker (`apps/api`)**: Deployed as a native Cloudflare Worker via `src/worker.ts` with [`apps/api/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/api/wrangler.jsonc) (`nodejs_compat`, `nodejs_compat_populate_process_env`), maintaining 100% backward compatibility with Node.js `serve` (`src/index.ts`) and Vitest/Supertest integration suites. NPM scripts: `dev:worker`, `deploy`.
+- **Next.js OpenNext Bundle (`apps/web`)**: Deployed via `@opennextjs/cloudflare` adapter and [`apps/web/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/web/wrangler.jsonc), compiling Next.js App Router server functions into `.open-next/worker.js` and client static assets into `.open-next/assets` served by Cloudflare Workers Assets. NPM scripts: `build:worker`, `deploy`, `preview:worker`.
+- **Database Integration**: Direct edge communication with remote **Turso** (`libsql://...`) via `@libsql/client` and `@libsql/kysely-libsql` over HTTP/WebSockets, bypassing edge filesystem limitations.
+- **CI/CD Automation**: Automated multi-stage deployment via GitHub Actions ([`.github/workflows/deploy.yml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/deploy.yml)) running Turborepo lint and all 90 unit/integration tests before deploying the API worker and Next.js Web worker (built on Ubuntu runner with OpenNext) using `cloudflare/wrangler-action@v3`.
+- **Deployment Documentation**: Complete guide in [`docs/guides/cloudflare-deployment.md`](file:///d:/WEB/SnakeMonorepo/docs/guides/cloudflare-deployment.md).
+
+## AGENTS.md & Documentation Maintenance Policy
+
+1. **Mandatory Post-Change Validation**: After ANY change (features, bugfixes, refactorings, tests, endpoints, dependencies, or configuration), ALWAYS check and validate the modifications against both `AGENTS.md` and the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory. Ensure that both files/folders accurately describe the changes and the current state of the project.
+2. **Automated Documentation**: Whenever new technologies, routes, endpoints, test suites, or features are added or updated in the project, `AGENTS.md` must be updated to document them.
+3. **User Confirmation Prompt**: Always ask the user if newly introduced technologies or features should be added to `AGENTS.md`.
+4. **Semantic Naming Standard**: Ensure all newly written or modified code strictly adheres to the semantic variable naming rule.
+5. **Mandatory Linter & Test Verification**: Always run the linter (`npm run lint` / `turbo run lint`) and tests (`npm run test`) to verify that there are zero warnings, zero lint errors, and all tests pass before completing any task.
+6. **Continuous Documentation Sync (`docs/`)**: Constantly verify and, whenever needed, update the documentation in the [`docs/`](file:///d:/WEB/SnakeMonorepo/docs/) directory (architecture overviews, API specs, developer guides, test metrics, and quickstart commands) whenever architecture, state management, dependencies, routes, test suites, or workflows change.
+7. **Strict Typing & JSDoc Maintenance**: Ensure all newly written or modified services, hooks, and API methods contain comprehensive JSDoc/TSDoc and zero `any` types.
+
