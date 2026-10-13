@@ -133,3 +133,28 @@ npm --workspace=api run dev:worker
 # In terminal 2 (Web worker):
 npm --workspace=web run preview:worker
 ```
+
+---
+
+## 5. Automated CI/CD via GitHub Actions
+
+The repository includes an automated deployment workflow at [`.github/workflows/deploy.yml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/deploy.yml).
+
+### Workflow Architecture
+1. **Test & Lint Job**: Runs Turborepo lint (`npm run lint`) and all 90 unit/integration test suites (`npm run test`) across workspaces.
+2. **Deploy API Worker**: Uses `cloudflare/wrangler-action@v3` to deploy the Hono API worker (`snakemonorepo`).
+3. **Deploy Web Worker**: Compiles the Next.js OpenNext bundle on native Ubuntu Linux (`npm --workspace=web run build:worker`) and deploys the `snake-web` worker and assets with `cloudflare/wrangler-action@v3`.
+
+### Required GitHub Secrets
+Configure the following secrets in GitHub (**Settings > Secrets and variables > Actions**):
+
+| Secret Name | Value Description |
+| :--- | :--- |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with `Workers:Edit` and `Pages:Edit` permissions |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Account ID (`48a1bdf46299165fe767c32011694c5c`) |
+| `TURSO_AUTH_TOKEN` | Turso Database authentication token |
+| `BETTER_AUTH_SECRET` | Secret key for Better Auth signing |
+
+### Live Endpoints
+- **Hono API Worker**: `https://snakemonorepo.ipx12.workers.dev`
+- **Next.js Web Worker**: `https://snake-web.ipx12.workers.dev`
