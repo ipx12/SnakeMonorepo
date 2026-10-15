@@ -41,6 +41,8 @@ export const getTasksForUser = async (
     .selectFrom('task')
     .selectAll()
     .where('userId', '=', userId)
+    .orderBy('createdAt', 'desc')
+    .orderBy('id', 'asc')
     .execute();
   return taskRows.map(mapRowToTask);
 };

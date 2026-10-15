@@ -44,8 +44,15 @@ async function proxyApiRequest(request: NextRequest, { params }: { params: Promi
     });
 
     const responseHeaders = new Headers();
+    const headersToOmit = new Set([
+      'set-cookie',
+      'content-encoding',
+      'content-length',
+      'transfer-encoding',
+    ]);
+
     apiResponse.headers.forEach((headerValue, headerKey) => {
-      if (headerKey.toLowerCase() !== 'set-cookie') {
+      if (!headersToOmit.has(headerKey.toLowerCase())) {
         responseHeaders.append(headerKey, headerValue);
       }
     });
