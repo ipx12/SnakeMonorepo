@@ -59,6 +59,8 @@ export const getAdminUsersPaginated = async (
 
   const rawUsers = await baseQuery
     .selectAll()
+    .orderBy('createdAt', 'desc')
+    .orderBy('id', 'asc')
     .limit(requestedLimit)
     .offset(offset)
     .execute();

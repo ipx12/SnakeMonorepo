@@ -31,6 +31,10 @@ export const db = new Kysely<DatabaseSchema>({
   }),
 });
 
+if (process.env.NODE_ENV === 'production' && !process.env.BETTER_AUTH_SECRET) {
+  throw new Error('[Security] BETTER_AUTH_SECRET environment variable is required in production.');
+}
+
 export const auth = betterAuth({
   database: {
     db: db,
