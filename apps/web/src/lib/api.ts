@@ -36,7 +36,10 @@ const TASKS_API_URL = `${BASE_URL}/tasks`;
  */
 export async function getTasks(signal?: AbortSignal): Promise<Task[]> {
   const apiResponse = await fetch(TASKS_API_URL, { credentials: 'include', signal });
-  if (!apiResponse.ok) throw new Error('Failed to fetch tasks');
+  if (!apiResponse.ok) {
+    const errorData = await apiResponse.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch tasks');
+  }
   return apiResponse.json();
 }
 
@@ -55,7 +58,10 @@ export async function createTask(title: string, description: string): Promise<Ta
     body: JSON.stringify({ title, description }),
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to create task');
+  if (!apiResponse.ok) {
+    const errorData = await apiResponse.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to create task');
+  }
   return apiResponse.json();
 }
 
@@ -77,7 +83,10 @@ export async function updateTask(
     body: JSON.stringify(updates),
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to update task');
+  if (!apiResponse.ok) {
+    const errorData = await apiResponse.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to update task');
+  }
   return apiResponse.json();
 }
 
@@ -92,7 +101,10 @@ export async function deleteTask(taskId: string): Promise<void> {
     method: 'DELETE',
     credentials: 'include',
   });
-  if (!apiResponse.ok) throw new Error('Failed to delete task');
+  if (!apiResponse.ok) {
+    const errorData = await apiResponse.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to delete task');
+  }
 }
 
 /**

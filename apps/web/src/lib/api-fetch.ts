@@ -24,22 +24,34 @@ export async function dispatchApiRequest(
   targetUrl: string,
   requestInit: RequestInit = {}
 ): Promise<Response> {
-  try {
-    const context = await getCloudflareContext({ async: true });
-    const bindings = context?.env as CloudflareBindings | undefined;
+  const parsedUrl = new URL(targetUrl);
+  const isLocalhost =
+    parsedUrl.hostname === 'localhost' ||
+    parsedUrl.hostname === '127.0.0.1' ||
+    parsedUrl.hostname === '::1';
 
-    if (bindings?.API && typeof bindings.API.fetch === 'function') {
-      const parsedUrl = new URL(targetUrl);
-      const cleanHeaders = new Headers(requestInit.headers);
-      cleanHeaders.set('host', parsedUrl.host);
+  if (!isLocalhost) {
+    try {
+      const context = await getCloudflareContext({ async: true });
+      const bindings = context?.env as CloudflareBindings | undefined;
 
-      return await bindings.API.fetch(targetUrl, {
-        ...requestInit,
-        headers: cleanHeaders,
-      });
+      if (bindings?.API && typeof bindings.API.fetch === 'function') {
+        const cleanHeaders = new Headers(requestInit.headers);
+        cleanHeaders.set('host', parsedUrl.host);
+
+        const bindingResponse = await bindings.API.fetch(targetUrl, {
+          ...requestInit,
+          headers: cleanHeaders,
+        });
+
+        // If local emulator returns 503 worker not found, fall back to native fetch
+        if (bindingResponse.status !== 503) {
+          return bindingResponse;
+        }
+      }
+    } catch {
+      // In local development or during static site generation, getCloudflareContext is unavailable
     }
-  } catch {
-    // In local development or during static site generation, getCloudflareContext is unavailable
   }
 
   // Fallback for local development
