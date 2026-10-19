@@ -78,7 +78,7 @@ You can override defaults by creating a `.env` file in the monorepo root or spec
 
 ---
 
-## 5. Next.js Standalone Optimization
+## 6. Next.js Standalone Optimization
 
 The frontend Dockerfile utilizes Next.js **standalone output** (`output: 'standalone'` in `apps/web/next.config.ts`).
 - Automatically traces dependencies from workspace root and trims unused `node_modules`.
