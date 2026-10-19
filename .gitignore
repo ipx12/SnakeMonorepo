@@ -72,3 +72,13 @@ coverage/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Personal Documents & Resume
+*Resume*.docx
+*Resume*.pdf
+scripts/resume.html
+scripts/create_resume_docx.py
