@@ -47,7 +47,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 
 ### 4. Monorepo Architecture, Database & Optimization
 
-- **Frontend (`apps/web`)**: Next.js App Router on Port 3000 with Optimistic UI updates and Debounced Search.
+- **Frontend (`apps/web`)**: Next.js App Router (v16.4.2) on Port 3000 with Partial Prerendering (PPR) (`cacheComponents: true`, `partialPrefetching: true`), Turbopack Dev Cache Garbage Collection (`turbopackGc`), native bundle analyzer (`npm --workspace=web run analyze` / `next analyze`), and streaming Suspense shells via segment `loading.tsx` fallbacks. Optimistic UI updates and Debounced Search.
 - **Backend (`apps/api`)**: Layered Hono server on Port 3001:
   - **Routes (`src/routes/`)**: Route definitions and middleware binding (`task.routes.ts`, `admin.routes.ts`).
   - **Controllers (`src/controllers/`)**: HTTP request/response handlers (`task.controller.ts`, `admin.controller.ts`).
@@ -81,10 +81,10 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 
 ### 6. Directory Structure Conventions
 
-- `apps/web/src/app/`: Next.js Server Component pages, layouts, and route handlers (`/`, `/login`, `/register`, `/admin/users`, `/api/[...path]`).
+- `apps/web/src/app/`: Next.js Server Component pages, layouts, and route handlers (`/`, `/login`, `/register`, `/admin/users`, `/api/[...path]`). Includes streaming Suspense loading shells (`app/loading.tsx`, `app/admin/users/loading.tsx`).
 - `apps/web/src/components/`: Visual UI components:
   - `components/ui/`: Watermelon UI design primitives (`Button`, `Input`, `Table`, etc.).
-  - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)).
+  - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)), header (`DashboardHeader.tsx`), and partial prerendering skeleton ([`DashboardLoadingSkeleton.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardLoadingSkeleton.tsx)).
   - `components/admin/`: Modular admin user management view: orchestrator ([`AdminUsersContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/admin/AdminUsersContainer.tsx)), header (`AdminHeader.tsx`), metric cards (`AdminStatsGrid.tsx`), search/page-size toolbar (`AdminUsersToolbar.tsx`), table view (`AdminUsersTable.tsx`), row component (`AdminUserRow.tsx`), expanded metadata/JSON viewer (`AdminUserDetails.tsx`), pagination bar (`AdminPagination.tsx`), access denied guard (`AccessDeniedCard.tsx`), and loading skeleton (`AdminLoadingSkeleton.tsx`).
   - `components/auth/`: Interactive client authentication forms ([`LoginForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/LoginForm.tsx), [`RegisterForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/RegisterForm.tsx)).
 - `apps/web/src/lib/`: Business logic, API calls (`api.ts`), server fetch utility (`api-server.ts`), Service Binding proxy dispatcher (`api-fetch.ts`), query options (`query-options.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.

@@ -54,7 +54,9 @@ The backend follows a strict **Layered Architecture** adhering to the **Single R
 
 ## Frontend Architecture (`apps/web`)
 
-* **Next.js App Router (RSC & Client Containers)**:
+* **Next.js App Router (RSC, PPR & Streaming)**:
+  * **Partial Prerendering (PPR) & Cache Components**: Next.js 16.4 configuration (`cacheComponents: true`, `partialPrefetching: true`) generating static prerender shells while streaming dynamic session and task data.
+  * **Streaming Suspense Shells (`loading.tsx`)**: Route segments (`app/loading.tsx` with `DashboardLoadingSkeleton`, `app/admin/users/loading.tsx` with `AdminLoadingSkeleton`) supply instant zero-layout-shift skeletons that render while server components stream in.
   * **Server Component Pages (`src/app/`)**: Lightweight server-rendered entrypoints (`/`, `/login`, `/register`, `/admin/users`) that perform server-side session checks and forward validated props down to client containers.
   * **Feature Containers (`src/components/`)**: Client-side interactive components (`DashboardContainer`, `AdminUsersContainer`, `LoginForm`, `RegisterForm`) isolated with `'use client'`.
   * **SSR Route Protection (`src/lib/auth-server.ts`)**: Secure server-side session retrieval (`getServerSession`) forwarding cookies and headers with `cache: 'no-store'` and timeout safeguards.
