@@ -13,6 +13,10 @@ export const metadata: Metadata = {
 
 const noop = () => {};
 
+/**
+ * Server Component for Admin Users route.
+ * Automatically streamed inside Suspense via admin/users/loading.tsx.
+ */
 export default async function AdminUsersPage() {
   const { user } = await getServerSession();
 
