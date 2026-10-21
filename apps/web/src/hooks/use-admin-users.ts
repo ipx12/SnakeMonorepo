@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { adminUsersQueryOptions } from '@/lib/query-options';
 import { UserRole } from '@snake/types';
@@ -31,9 +31,15 @@ export function useAdminUsers(options: UseAdminUsersOptions = {}) {
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const isInitialMount = useRef(true);
 
   // Debounce search input by 300ms
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const timerId = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery.trim());
       setCurrentPage(1); // Reset to first page on search query change
