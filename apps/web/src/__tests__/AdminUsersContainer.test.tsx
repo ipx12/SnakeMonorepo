@@ -189,7 +189,9 @@ describe('AdminUsersContainer Component Integration Tests', () => {
     await userEvent.click(nextButton);
 
     // Verify page number updated in DOM
-    expect(screen.getByText('2')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('2')).toBeInTheDocument();
+    });
   });
 
   it('should display error message when user fetching fails without crashing the admin panel', async () => {
