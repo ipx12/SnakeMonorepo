@@ -10,25 +10,28 @@ import { adminRouter } from './routes/admin.routes';
  */
 export const app = new Hono();
 
-// CORS configuration supporting local development, configured frontend URL, and Cloudflare domains
+// CORS configuration supporting local development, configured frontend URL, and explicit Cloudflare domains
+const allowedOrigins = new Set([
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://snake-web.ipx12.workers.dev',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+]);
+
 app.use(
   '*',
   cors({
     origin: (requestOrigin: string) => {
-      const configuredFrontendUrl = process.env.FRONTEND_URL;
-      if (configuredFrontendUrl && requestOrigin === configuredFrontendUrl) {
+      if (allowedOrigins.has(requestOrigin)) {
         return requestOrigin;
       }
       if (
-        !requestOrigin ||
-        requestOrigin.startsWith('http://localhost:') ||
-        requestOrigin.startsWith('http://127.0.0.1:') ||
-        requestOrigin.endsWith('.pages.dev') ||
-        requestOrigin.endsWith('.workers.dev')
+        requestOrigin &&
+        (requestOrigin.startsWith('http://localhost:') || requestOrigin.startsWith('http://127.0.0.1:'))
       ) {
         return requestOrigin;
       }
-      return configuredFrontendUrl || 'http://localhost:3000';
+      return process.env.FRONTEND_URL || 'http://localhost:3000';
     },
     credentials: true,
   })
