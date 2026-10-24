@@ -18,6 +18,8 @@ const allowedOrigins = new Set([
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ]);
 
+const isProductionEnvironment = process.env.NODE_ENV === 'production';
+
 app.use(
   '*',
   cors({
@@ -25,13 +27,16 @@ app.use(
       if (allowedOrigins.has(requestOrigin)) {
         return requestOrigin;
       }
+      // Arbitrary localhost ports are trusted only during local development
       if (
+        !isProductionEnvironment &&
         requestOrigin &&
         (requestOrigin.startsWith('http://localhost:') || requestOrigin.startsWith('http://127.0.0.1:'))
       ) {
         return requestOrigin;
       }
-      return process.env.FRONTEND_URL || 'http://localhost:3000';
+      // Disallowed origins receive no Access-Control-Allow-Origin header
+      return null;
     },
     credentials: true,
   })
@@ -54,7 +59,7 @@ app.onError((error, context) => {
   console.error('Unhandled API Error:', error);
   return context.json(
     {
-      message: error.message || 'Internal Server Error',
+      message: isProductionEnvironment ? 'Internal Server Error' : error.message || 'Internal Server Error',
     },
     500
   );
