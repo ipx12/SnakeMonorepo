@@ -19,7 +19,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives, Sonner & Tailwind CSS v4 located in `src/components/ui/` — including `Button`, `Input`, `Textarea`, `Checkbox`, `Sonner`, and `Table`).
 - **Table Primitive**: Component set in [`apps/web/src/components/ui/table.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/ui/table.tsx) (`Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption`) used across data displays like `/admin/users`.
 - **Design Aesthetic**: Premium dark mode, glassmorphism, subtle micro-animations, and vibrant gradients.
-- **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, and action buttons.
+- **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, `toast.warning`, neutral toast styling, and interactive action buttons (such as task deletion "Undo" flows).
 - **Animation Platform**: **GSAP** (`gsap`) and **GSAP React** (`@gsap/react`). Used for high-performance 60fps micro-interactions, scoped timelines, and smooth state transitions:
   - **Scoped Lifecycle & Cleanup**: Always register `gsap.registerPlugin(useGSAP)` and scope animations via `useGSAP(..., { scope: containerRef })` to ensure automatic cleanup and React 19 StrictMode compatibility.
   - **Safe Interaction Handlers**: Wrap interactive user callbacks (mouse move/leave, deletion) in `contextSafe()` to guarantee automatic garbage collection and prevent memory leaks.
@@ -75,9 +75,9 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
   - Dashboard: [`TaskList.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/TaskList.test.tsx) for task rendering, completion toggles, and inline editing workflows.
   - Toast Notifications: [`sonner.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/sonner.test.tsx) for dark glassmorphism toast styling and notifications.
   - Page Route Hydration: [`pages.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/pages.test.tsx) for SSR hydration and route access.
-- **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
+- **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, yellow warning undo toast triggers, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
 - **Admin UI Component Testing**: Integration tests in [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx) testing access controls, stats cards, user rows, search filtering, and pagination navigation.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 90 unit & integration tests across workspaces (25 in `apps/api`, 65 in `apps/web`).
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 92 unit & integration tests across workspaces (25 in `apps/api`, 67 in `apps/web`).
 
 ### 6. Directory Structure Conventions
 
