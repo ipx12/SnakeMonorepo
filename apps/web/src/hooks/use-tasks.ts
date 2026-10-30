@@ -13,13 +13,13 @@ export interface UseTasksOptions {
 
 /**
  * Custom React Hook encapsulating TanStack Query v5 server state, cache invalidation,
- * and optimistic UI updates for personal tasks.
+ * and optimistic UI updates for personal tasks, including neutral undoable deletions.
  *
  * @param options - Configuration options controlling query enablement
  * @returns Object providing task data, loading/error states, and CRUD mutation handlers
  *
  * @example
- * const { taskList, isTasksLoading, createTask, toggleTaskCompletion, deleteTask } = useTasks();
+ * const { taskList, isTasksLoading, createTask, toggleTaskCompletion, deleteTask, restoreTask } = useTasks();
  */
 export function useTasks(options: UseTasksOptions = {}) {
   const { enabled = true } = options;
@@ -108,18 +108,40 @@ export function useTasks(options: UseTasksOptions = {}) {
     },
   });
 
-  // Mutation: Delete task with optimistic update
+  // Mutation: Restore task (used by Undo action)
+  const restoreTaskMutation = useMutation({
+    mutationFn: async (taskToRestore: Task) => {
+      const restoredTask = await createTask(
+        taskToRestore.title,
+        taskToRestore.description || ''
+      );
+      if (taskToRestore.completed) {
+        return await updateTask(restoredTask.id, { completed: true });
+      }
+      return restoredTask;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      toast.success('Task restored');
+    },
+    onError: () => {
+      toast.error('Failed to restore task');
+    },
+  });
+
+  // Mutation: Delete task with optimistic update and yellow/amber Undo toast
   const deleteMutation = useMutation({
     mutationFn: (targetTaskId: string) => deleteTask(targetTaskId),
     onMutate: async (targetTaskId) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.all });
       const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.all);
+      const deletedTask = previousTasks?.find((existingTask) => existingTask.id === targetTaskId);
 
       queryClient.setQueryData<Task[]>(taskKeys.all, (cachedTasks) =>
         cachedTasks?.filter((existingTask) => existingTask.id !== targetTaskId)
       );
 
-      return { previousTasks };
+      return { previousTasks, deletedTask };
     },
     onError: (_mutationError, _targetTaskId, mutationContext) => {
       if (mutationContext?.previousTasks) {
@@ -130,8 +152,19 @@ export function useTasks(options: UseTasksOptions = {}) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
     },
-    onSuccess: () => {
-      toast.success('Task deleted');
+    onSuccess: (_data, _targetTaskId, mutationContext) => {
+      const deletedTask = mutationContext?.deletedTask;
+      toast.warning('Task deleted', {
+        description: deletedTask ? deletedTask.title : undefined,
+        action: deletedTask
+          ? {
+              label: 'Undo',
+              onClick: () => {
+                restoreTaskMutation.mutate(deletedTask);
+              },
+            }
+          : undefined,
+      });
     },
   });
 
@@ -149,6 +182,8 @@ export function useTasks(options: UseTasksOptions = {}) {
     isUpdatingTask: updateMutation.isPending,
     deleteTask: deleteMutation.mutate,
     isDeletingTask: deleteMutation.isPending,
+    restoreTask: restoreTaskMutation.mutate,
+    isRestoringTask: restoreTaskMutation.isPending,
     refreshTasks: () => queryClient.invalidateQueries({ queryKey: taskKeys.all }),
     refetch,
   };
