@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "build:worker": "opennextjs-cloudflare build",
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
-    "preview:worker": "wrangler dev"
+    "preview:worker": "wrangler dev",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
