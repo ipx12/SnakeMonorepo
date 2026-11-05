@@ -25,7 +25,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
         {/* Brand logo */}
         <Link href="/" className="flex items-center gap-2 group transition-transform active:scale-95 shrink-0">
-          <div className="size-8 sm:size-9 rounded-xl bg-linear-to-br from-emerald-400 via-teal-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-all">
+          <div className="size-8 sm:size-9 rounded-xl bg-linear-to-br from-emerald-400 via-teal-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-[color,background-color,border-color,box-shadow,scale]">
             <Sparkles className="size-4 sm:size-5 text-white animate-pulse" />
           </div>
           <div className="flex flex-col">

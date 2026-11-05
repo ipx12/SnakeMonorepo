@@ -44,7 +44,8 @@ export function TaskList({
   const taskListContainerRef = useRef<HTMLDivElement | null>(null);
   const isInitialMountRef = useRef(true);
   const previousLoadingStateRef = useRef(isTasksLoading);
-  const previousTaskIdsRef = useRef<Set<string>>(new Set(taskList.map(t => t.id)));
+  // Lazily populated on the first effect run to avoid rebuilding a Set on every render
+  const previousTaskIdsRef = useRef<Set<string> | null>(null);
 
   useGSAP(
     () => {
@@ -55,7 +56,8 @@ export function TaskList({
       isInitialMountRef.current = false;
       previousLoadingStateRef.current = isTasksLoading;
 
-      const currentTaskIds = new Set(taskList.map(t => t.id));
+      const currentTaskIds = new Set(taskList.map(task => task.id));
+      const previousTaskIds = previousTaskIdsRef.current ?? currentTaskIds;
 
       // Staggered reveal: ONLY when loading finishes (initial load / refresh) or on initial mount with items
       if ((isInitialMountWithItems || wasLoadingFinished) && taskList.length > 0) {
@@ -76,7 +78,7 @@ export function TaskList({
         }
       } else {
         // Find tasks that were just added
-        const newTasks = taskList.filter(t => !previousTaskIdsRef.current.has(t.id));
+        const newTasks = taskList.filter(task => !previousTaskIds.has(task.id));
         
         if (newTasks.length > 0) {
           const newTaskElements = newTasks
