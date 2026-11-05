@@ -10,25 +10,33 @@ import { adminRouter } from './routes/admin.routes';
  */
 export const app = new Hono();
 
-// CORS configuration supporting local development, configured frontend URL, and Cloudflare domains
+// CORS configuration supporting local development, configured frontend URL, and explicit Cloudflare domains
+const allowedOrigins = new Set([
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://snake-web.ipx12.workers.dev',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+]);
+
+const isProductionEnvironment = process.env.NODE_ENV === 'production';
+
 app.use(
   '*',
   cors({
     origin: (requestOrigin: string) => {
-      const configuredFrontendUrl = process.env.FRONTEND_URL;
-      if (configuredFrontendUrl && requestOrigin === configuredFrontendUrl) {
+      if (allowedOrigins.has(requestOrigin)) {
         return requestOrigin;
       }
+      // Arbitrary localhost ports are trusted only during local development
       if (
-        !requestOrigin ||
-        requestOrigin.startsWith('http://localhost:') ||
-        requestOrigin.startsWith('http://127.0.0.1:') ||
-        requestOrigin.endsWith('.pages.dev') ||
-        requestOrigin.endsWith('.workers.dev')
+        !isProductionEnvironment &&
+        requestOrigin &&
+        (requestOrigin.startsWith('http://localhost:') || requestOrigin.startsWith('http://127.0.0.1:'))
       ) {
         return requestOrigin;
       }
-      return configuredFrontendUrl || 'http://localhost:3000';
+      // Disallowed origins receive no Access-Control-Allow-Origin header
+      return null;
     },
     credentials: true,
   })
@@ -51,7 +59,7 @@ app.onError((error, context) => {
   console.error('Unhandled API Error:', error);
   return context.json(
     {
-      message: error.message || 'Internal Server Error',
+      message: isProductionEnvironment ? 'Internal Server Error' : error.message || 'Internal Server Error',
     },
     500
   );

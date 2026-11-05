@@ -17,7 +17,7 @@
 
 ## 2. Testing Infrastructure & Strategy
 
-The monorepo features a layered automated testing suite executed via Vitest (**90 total tests**):
+The monorepo features a layered automated testing suite executed via Vitest (**92 total tests**):
 
 ### Suite Breakdown
 
@@ -26,7 +26,7 @@ The monorepo features a layered automated testing suite executed via Vitest (**9
 | **Validation Layer** | `@snake/types` | [`schemas.test.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/schemas.test.ts) | 13 | Shared Zod schemas, boundary values, type coercion |
 | **Backend Services** | `apps/api` | [`services.test.ts`](file:///d:/WEB/SnakeMonorepo/apps/api/src/__tests__/services.test.ts) | 7 | Kysely database queries, task CRUD, admin user pagination |
 | **API Endpoints & RBAC** | `apps/api` | [`tasks.test.ts`](file:///d:/WEB/SnakeMonorepo/apps/api/src/__tests__/tasks.test.ts) | 18 | Hono endpoints, Supertest, multi-tenant isolation, admin overrides, 401/403/404 handling |
-| **Server State Hooks** | `apps/web` | [`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx), [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) | 11 | TanStack Query v5 optimistic updates, cache rollback, 300ms search debounce |
+| **Server State Hooks** | `apps/web` | [`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx), [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) | 13 | TanStack Query v5 optimistic updates, yellow warning undo toast, cache rollback, 300ms search debounce |
 | **Authentication UI** | `apps/web` | [`LoginForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/LoginForm.test.tsx), [`RegisterForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/RegisterForm.test.tsx), [`Navbar.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/Navbar.test.tsx) | 14 | Form validation, demo fill, role-based nav links, sign out |
 | **Pages & Components** | `apps/web` | [`pages.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/pages.test.tsx), [`TaskList.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/TaskList.test.tsx), [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx), [`sonner.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/sonner.test.tsx) | 27 | SSR page hydration, task inline editing, degraded error states, table pagination |
 

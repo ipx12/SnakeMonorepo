@@ -12,6 +12,10 @@ export const metadata: Metadata = {
 
 const noop = () => {};
 
+/**
+ * Server Component for Dashboard route.
+ * Automatically streamed inside Suspense via app/loading.tsx.
+ */
 export default async function Home() {
   const { user } = await getServerSession();
   const queryClient = new QueryClient();

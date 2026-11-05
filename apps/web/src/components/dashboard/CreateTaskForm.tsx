@@ -25,10 +25,11 @@ export function CreateTaskForm({
       </h2>
       <form onSubmit={onSubmit} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <label htmlFor="create-task-title" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Title
           </label>
           <Input
+            id="create-task-title"
             type="text"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -38,10 +39,11 @@ export function CreateTaskForm({
           />
         </div>
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <label htmlFor="create-task-description" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Description
           </label>
           <Textarea
+            id="create-task-description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Provide some details..."
@@ -51,7 +53,7 @@ export function CreateTaskForm({
         </div>
         <Button
           type="submit"
-          className="w-full bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-primary-foreground font-semibold py-2.5 rounded-xl transition-all cursor-pointer shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-[0.98]"
+          className="w-full bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-primary-foreground font-semibold py-2.5 rounded-xl transition-[color,background-color,border-color,box-shadow,scale] cursor-pointer shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-[0.98]"
         >
           Add Task
         </Button>

@@ -7,7 +7,7 @@ export interface ServerFetchOptions {
 }
 
 /**
- * Server-side utility to securely fetch data from the Express API
+ * Server-side utility to securely fetch data from the Hono API
  * by forwarding the Next.js incoming cookies and headers.
  * This is used for Server Components prefetching.
  */

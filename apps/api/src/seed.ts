@@ -1,7 +1,8 @@
+import { DatabaseSchema } from '@snake/types';
 import { sql, type Kysely } from 'kysely';
 import { db, auth } from './auth';
 
-export const seedDemoUser = async (databaseInstance?: Kysely<any>): Promise<void> => {
+export const seedDemoUser = async (databaseInstance?: Kysely<DatabaseSchema>): Promise<void> => {
   const targetDatabase = databaseInstance || db;
   try {
     const existingUserResult = await sql<{ id: string }>`
@@ -14,9 +15,11 @@ export const seedDemoUser = async (databaseInstance?: Kysely<any>): Promise<void
           email: 'demo@watermelon.ui',
           password: 'password123',
           name: 'Demo Admin',
-          role: 'admin',
         },
       });
+      await sql`
+        UPDATE user SET role = 'admin' WHERE email = 'demo@watermelon.ui'
+      `.execute(targetDatabase);
       console.log('[Database Seed] Created demo admin user (demo@watermelon.ui / password123).');
     } else {
       await sql`

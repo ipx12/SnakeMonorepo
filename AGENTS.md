@@ -19,7 +19,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - **UI System**: Use **Watermelon UI** design components (built with Radix UI primitives, Sonner & Tailwind CSS v4 located in `src/components/ui/` — including `Button`, `Input`, `Textarea`, `Checkbox`, `Sonner`, and `Table`).
 - **Table Primitive**: Component set in [`apps/web/src/components/ui/table.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/ui/table.tsx) (`Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableHead`, `TableRow`, `TableCell`, `TableCaption`) used across data displays like `/admin/users`.
 - **Design Aesthetic**: Premium dark mode, glassmorphism, subtle micro-animations, and vibrant gradients.
-- **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, and action buttons.
+- **Toast Notifications**: Built on **Sonner** (`apps/web/src/components/ui/sonner.tsx`) with dark glassmorphism styling, mounted globally via `<Toaster />` in `apps/web/src/app/layout.tsx`. Supports `toast.success`, `toast.error`, `toast.info`, `toast.warning`, neutral toast styling, and interactive action buttons (such as task deletion "Undo" flows).
 - **Animation Platform**: **GSAP** (`gsap`) and **GSAP React** (`@gsap/react`). Used for high-performance 60fps micro-interactions, scoped timelines, and smooth state transitions:
   - **Scoped Lifecycle & Cleanup**: Always register `gsap.registerPlugin(useGSAP)` and scope animations via `useGSAP(..., { scope: containerRef })` to ensure automatic cleanup and React 19 StrictMode compatibility.
   - **Safe Interaction Handlers**: Wrap interactive user callbacks (mouse move/leave, deletion) in `contextSafe()` to guarantee automatic garbage collection and prevent memory leaks.
@@ -32,7 +32,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 - **Frontend Client**: `authClient` from [`src/lib/auth-client.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-client.ts) consumed via native hooks (`useSession`, `signIn`, `signUp`).
 - **Backend Auth Endpoint**: Hono API mounted at `http://localhost:3001/api/auth/*`.
 - **Default Demo Account**: `demo@watermelon.ui` / `password123`.
-- **Role-Based Access Control (RBAC)**: User roles defined in [`src/lib/roles.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/roles.ts) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`).
+- **Role-Based Access Control (RBAC)**: User roles defined centrally in `@snake/types` ([`packages/types/src/index.ts`](file:///d:/WEB/SnakeMonorepo/packages/types/src/index.ts)) (`UserRole.Admin`, `UserRole.User`, `UserRole.Guest`) and re-exported in [`src/lib/api.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/api.ts).
 - **Admin Dashboard**: Route `/admin/users` for administrators to view, search, and manage user accounts and session details.
 - **Server-Side Route Protection (SSR Guard)**: Server Component session verification and authorization implemented via [`src/lib/auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts) (`getServerSession()`). Forwards incoming Next.js cookies and headers to the backend with `cache: 'no-store'` and an `AbortSignal.timeout(5000)` safeguard. Eliminates layout flashing (Zero Layout Flash) and bundle exposure prior to client hydration.
 - **RSC to Client Hydration**: Route pages (`page.tsx`) act as lightweight Server Components that perform authorization checks and pass pre-validated user models (`initialUser`) down to client containers (`AdminUsersContainer`), avoiding redundant client session roundtrips.
@@ -47,7 +47,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
 
 ### 4. Monorepo Architecture, Database & Optimization
 
-- **Frontend (`apps/web`)**: Next.js App Router on Port 3000 with Optimistic UI updates and Debounced Search.
+- **Frontend (`apps/web`)**: Next.js App Router (v16.4.2) on Port 3000 with Partial Prerendering (PPR) (`cacheComponents: true`, `partialPrefetching: true`), Turbopack Dev Cache Garbage Collection (`turbopackGc`), native bundle analyzer (`npm --workspace=web run analyze` / `next analyze`), and streaming Suspense shells via segment `loading.tsx` fallbacks. Optimistic UI updates and Debounced Search.
 - **Backend (`apps/api`)**: Layered Hono server on Port 3001:
   - **Routes (`src/routes/`)**: Route definitions and middleware binding (`task.routes.ts`, `admin.routes.ts`).
   - **Controllers (`src/controllers/`)**: HTTP request/response handlers (`task.controller.ts`, `admin.controller.ts`).
@@ -73,26 +73,35 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
   - Navigation & Session: [`Navbar.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/Navbar.test.tsx) for guest/user/admin views and sign out cache invalidation.
   - Authentication Forms: [`LoginForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/LoginForm.test.tsx) and [`RegisterForm.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/RegisterForm.test.tsx) for validation, demo auto-fill, and submission handlers.
   - Dashboard: [`TaskList.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/TaskList.test.tsx) for task rendering, completion toggles, and inline editing workflows.
+  - Toast Notifications: [`sonner.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/sonner.test.tsx) for dark glassmorphism toast styling and notifications.
   - Page Route Hydration: [`pages.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/pages.test.tsx) for SSR hydration and route access.
-- **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
+- **Hook & Server State Testing**: React Testing Library `renderHook` testing TanStack Query v5 hooks ([`useTasks.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useTasks.test.tsx) for query invalidation, optimistic updates, yellow warning undo toast triggers, and cache rollback; [`useAdminUsers.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/useAdminUsers.test.tsx) for 300ms search debouncing, pagination transitions, and metrics computation).
 - **Admin UI Component Testing**: Integration tests in [`AdminUsersContainer.test.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/__tests__/AdminUsersContainer.test.tsx) testing access controls, stats cards, user rows, search filtering, and pagination navigation.
-- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 90 unit & integration tests across workspaces (25 in `apps/api`, 65 in `apps/web`).
+- **Monorepo Execution**: Run all workspace tests via `npm run test` (`turbo run test`). Total 92 unit & integration tests across workspaces (25 in `apps/api`, 67 in `apps/web`).
+- **React Doctor (Static React Health Scan)**: Run `npm --workspace=web run doctor` (`npx react-doctor@latest`) to audit `apps/web` for bugs, performance, accessibility, and maintainability issues (current score: 100 / 100 target, 87+ baseline). Configured via [`apps/web/react-doctor.config.json`](file:///d:/WEB/SnakeMonorepo/apps/web/react-doctor.config.json), which globally ignores verified false positives:
+  - `react-doctor/query-stable-query-client`: Server Components (`app/**/page.tsx`) intentionally create `new QueryClient()` per request — the officially recommended TanStack Query SSR prefetch pattern (verified via `tanstack-query-docs` MCP).
+  - `react-doctor/only-export-components`: Watermelon/shadcn UI primitives intentionally co-export helpers (`buttonVariants`, `toast`).
+  - `react-doctor/no-unguarded-throwing-parse-call`: `new URL(INTERNAL_API_URL)` in `api-server.ts` should fail loudly on misconfiguration.
+  - Accessibility rule: every form `<label>` must use `htmlFor` bound to a control `id`; non-input groups (e.g. role picker) use `<span id>` + `role="group" aria-labelledby`. Avoid `transition-all`; use explicit property lists (e.g. `transition-[color,background-color,border-color,box-shadow,scale]`).
+  - **Pull Request Checks**: [`.github/workflows/react-doctor.yml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/react-doctor.yml) runs `millionco/react-doctor@v2` with `directory: apps/web` on every PR touching `apps/web/**` or `packages/types/**` (and on pushes to `main`). It posts a sticky summary comment, inline review comments, and a commit status with the health score for new issues introduced relative to the merge base. Currently advisory (`blocking: none`); fix any reported findings before merging.
 
 ### 6. Directory Structure Conventions
 
-- `apps/web/src/app/`: Next.js Server Component pages, layouts, and route handlers (`/`, `/login`, `/register`, `/admin/users`).
+- `apps/web/src/app/`: Next.js Server Component pages, layouts, and route handlers (`/`, `/login`, `/register`, `/admin/users`, `/api/[...path]`). Includes streaming Suspense loading shells (`app/loading.tsx`, `app/admin/users/loading.tsx`).
 - `apps/web/src/components/`: Visual UI components:
   - `components/ui/`: Watermelon UI design primitives (`Button`, `Input`, `Table`, etc.).
-  - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)).
+  - `components/dashboard/`: Feature widgets and dashboard view ([`DashboardContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardContainer.tsx)), header (`DashboardHeader.tsx`), and partial prerendering skeleton ([`DashboardLoadingSkeleton.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/dashboard/DashboardLoadingSkeleton.tsx)).
   - `components/admin/`: Modular admin user management view: orchestrator ([`AdminUsersContainer.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/admin/AdminUsersContainer.tsx)), header (`AdminHeader.tsx`), metric cards (`AdminStatsGrid.tsx`), search/page-size toolbar (`AdminUsersToolbar.tsx`), table view (`AdminUsersTable.tsx`), row component (`AdminUserRow.tsx`), expanded metadata/JSON viewer (`AdminUserDetails.tsx`), pagination bar (`AdminPagination.tsx`), access denied guard (`AccessDeniedCard.tsx`), and loading skeleton (`AdminLoadingSkeleton.tsx`).
-  - `components/auth/`: Interactive client authentication forms ([`LoginForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/LoginForm.tsx), [`RegisterForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/RegisterForm.tsx)).
-- `apps/web/src/lib/`: Business logic, API calls (`api.ts`), roles definition (`roles.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.
+  - `components/auth/`: Interactive client authentication forms ([`LoginForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/LoginForm.tsx), [`RegisterForm.tsx`](file:///d:/WEB/SnakeMonorepo/apps/web/src/components/auth/RegisterForm.tsx)) and shared post-auth redirect status card (`AuthRedirectingCard.tsx`).
+- `apps/web/src/lib/`: Business logic, API calls (`api.ts`), server fetch utility (`api-server.ts`), Service Binding proxy dispatcher (`api-fetch.ts`), query options (`query-options.ts`), client authentication (`auth-client.ts`), server session verification ([`auth-server.ts`](file:///d:/WEB/SnakeMonorepo/apps/web/src/lib/auth-server.ts)), and helper utilities.
 - `apps/api/src/migrations/`: Versioned database migration definitions (`001_initial_schema.ts`).
 - `apps/api/src/scripts/`: Database management CLI scripts (`migrate.ts`, `seed.ts`).
 - `apps/api/src/controllers/`: Hono route controllers.
 - `apps/api/src/services/`: Database and business logic operations.
 - `apps/api/src/routes/`: Hono modular route definitions.
 - `apps/api/src/middlewares/`: Hono authentication and validation middlewares.
+- `apps/api/src/worker.ts`: Cloudflare Worker entry point exporting native fetch handler.
+- `apps/api/src/auth.ts`: Better Auth instance and Kysely database initialization.
 - `packages/types/`: Shared TypeScript models, interfaces, and Zod schemas (`@snake/types`).
 
 ### 7. Code Naming & Strict Typing Conventions
@@ -135,7 +144,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
   - `typecheck`: Runs TypeScript type checking (`npm run check-types` / `tsc --noEmit`) across `@snake/types`, `apps/api`, and `apps/web`.
   - `test`: Executes all 90 unit, integration, and UI component tests across workspaces (`npm run test`).
 
-### 11. Cloudflare Workers & Serverless Edge Deployment
+### 12. Cloudflare Workers & Serverless Edge Deployment
 
 - **Unified Edge Platform**: Full-stack serverless deployment on Cloudflare Edge without requiring persistent server processes or Docker containers.
 - **Hono API Worker (`apps/api`)**: Deployed as a native Cloudflare Worker via `src/worker.ts` with [`apps/api/wrangler.jsonc`](file:///d:/WEB/SnakeMonorepo/apps/api/wrangler.jsonc) (`nodejs_compat`, `nodejs_compat_populate_process_env`), maintaining 100% backward compatibility with Node.js `serve` (`src/index.ts`) and Vitest/Supertest integration suites. NPM scripts: `dev:worker`, `deploy`.

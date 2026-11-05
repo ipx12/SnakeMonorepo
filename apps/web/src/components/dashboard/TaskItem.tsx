@@ -166,7 +166,7 @@ export function TaskItem({
               variant="ghost"
               size="icon-sm"
               onClick={() => onStartEditTask(task)}
-              className="text-muted-foreground hover:text-emerald-400 hover:bg-secondary transition-all cursor-pointer"
+              className="text-muted-foreground hover:text-emerald-400 hover:bg-secondary transition-[color,background-color,border-color,box-shadow,scale] cursor-pointer"
               title="Edit"
             >
               <Edit2 className="size-3.5" />
@@ -175,7 +175,7 @@ export function TaskItem({
               variant="ghost"
               size="icon-sm"
               onClick={handleDeleteWithAnimation}
-              className="text-muted-foreground hover:text-destructive hover:bg-secondary transition-all cursor-pointer"
+              className="text-muted-foreground hover:text-destructive hover:bg-secondary transition-[color,background-color,border-color,box-shadow,scale] cursor-pointer"
               title="Delete"
             >
               <Trash2 className="size-3.5" />

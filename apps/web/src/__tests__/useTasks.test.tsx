@@ -15,11 +15,26 @@ vi.mock('../lib/api', () => ({
   deleteTask: vi.fn(),
 }));
 
+const { mockToast } = vi.hoisted(() => {
+  interface MockToastFn {
+    (message: string, options?: unknown): void;
+    success: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+  }
+
+  const toastFn = vi.fn() as unknown as MockToastFn;
+  toastFn.success = vi.fn();
+  toastFn.error = vi.fn();
+  toastFn.warning = vi.fn();
+  toastFn.info = vi.fn();
+
+  return { mockToast: toastFn };
+});
+
 vi.mock('../components/ui/sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-  },
+  toast: mockToast,
 }));
 
 function createTestWrapper() {
@@ -42,26 +57,26 @@ function createTestWrapper() {
   return { testQueryClient, WrapperComponent };
 }
 
-describe('useTasks Hook Unit Tests', () => {
-  const initialMockTasks: Task[] = [
-    {
-      id: 'task-101',
-      title: 'Initial Unit Test Setup',
-      description: 'Implement tests with Vitest',
-      completed: false,
-      userId: 'user-sample-1',
-      createdAt: '2026-03-01T10:00:00.000Z',
-    },
-    {
-      id: 'task-102',
-      title: 'Monorepo Architecture Review',
-      description: 'Check conventions in AGENTS.md',
-      completed: true,
-      userId: 'user-sample-1',
-      createdAt: '2026-03-01T11:00:00.000Z',
-    },
-  ];
+const initialMockTasks: Task[] = [
+  {
+    id: 'task-101',
+    title: 'Initial Task 1',
+    description: 'First test description',
+    completed: false,
+    userId: 'user-1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'task-102',
+    title: 'Initial Task 2',
+    description: 'Second test description',
+    completed: true,
+    userId: 'user-1',
+    createdAt: '2026-01-02T00:00:00.000Z',
+  },
+];
 
+describe('useTasks Hook with TanStack Query v5', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -73,47 +88,58 @@ describe('useTasks Hook Unit Tests', () => {
     const { result } = renderHook(() => useTasks(), { wrapper: WrapperComponent });
 
     await waitFor(() => {
+      expect(result.current.taskList).toEqual(initialMockTasks);
       expect(result.current.isTasksLoading).toBe(false);
+      expect(result.current.errorMessage).toBe('');
     });
-
-    expect(result.current.taskList).toEqual(initialMockTasks);
-    expect(result.current.taskList.length).toBe(2);
   });
 
-  it('should create a new task and trigger success toast', async () => {
-    vi.mocked(apiModule.getTasks).mockResolvedValue(initialMockTasks);
-    const createdTask: Task = {
-      id: 'task-103',
-      title: 'Newly Created Task',
-      description: 'Created description',
-      completed: false,
-      userId: 'user-sample-1',
-      createdAt: '2026-03-01T12:00:00.000Z',
-    };
-    vi.mocked(apiModule.createTask).mockResolvedValueOnce(createdTask);
-
+  it('should return error message when tasks query fails', async () => {
+    vi.mocked(apiModule.getTasks).mockRejectedValueOnce(new Error('Database offline'));
     const { WrapperComponent } = createTestWrapper();
+
     const { result } = renderHook(() => useTasks(), { wrapper: WrapperComponent });
 
     await waitFor(() => {
+      expect(result.current.errorMessage).toBe('Database offline');
       expect(result.current.isTasksLoading).toBe(false);
     });
+  });
 
-    await act(async () => {
-      await result.current.createTaskAsync({
-        title: 'Newly Created Task',
-        description: 'Created description',
+  it('should create a new task and trigger success toast', async () => {
+    const { testQueryClient, WrapperComponent } = createTestWrapper();
+    testQueryClient.setQueryData(taskKeys.all, initialMockTasks);
+
+    const createdTask: Task = {
+      id: 'task-103',
+      title: 'Brand New Task',
+      description: 'Brand new description',
+      completed: false,
+      userId: 'user-1',
+      createdAt: '2026-01-03T00:00:00.000Z',
+    };
+
+    vi.mocked(apiModule.createTask).mockResolvedValueOnce(createdTask);
+
+    const { result } = renderHook(() => useTasks(), { wrapper: WrapperComponent });
+
+    act(() => {
+      result.current.createTask({
+        title: 'Brand New Task',
+        description: 'Brand new description',
       });
     });
 
-    expect(apiModule.createTask).toHaveBeenCalledWith(
-      'Newly Created Task',
-      'Created description'
-    );
-    expect(toast.success).toHaveBeenCalledWith('Task created successfully');
+    await waitFor(() => {
+      expect(apiModule.createTask).toHaveBeenCalledWith(
+        'Brand New Task',
+        'Brand new description'
+      );
+      expect(toast.success).toHaveBeenCalledWith('Task created successfully');
+    });
   });
 
-  it('should optimistically update task completion status immediately', async () => {
+  it('should toggle task completion optimistically', async () => {
     const { testQueryClient, WrapperComponent } = createTestWrapper();
     testQueryClient.setQueryData(taskKeys.all, initialMockTasks);
 
@@ -125,18 +151,17 @@ describe('useTasks Hook Unit Tests', () => {
 
     const { result } = renderHook(() => useTasks(), { wrapper: WrapperComponent });
 
-    // Trigger toggle mutation
     act(() => {
       result.current.toggleTaskCompletion(initialMockTasks[0]);
     });
 
-    // Wait for onMutate to execute and verify optimistic update in cache
+    // Verify optimistic update has mutated the local cache
     await waitFor(() => {
-      const cachedTasksAfterMutation = testQueryClient.getQueryData<Task[]>(taskKeys.all);
-      const toggledTask = cachedTasksAfterMutation?.find(
+      const cachedTasksAfterOptimisticUpdate = testQueryClient.getQueryData<Task[]>(taskKeys.all);
+      const optimisticTask = cachedTasksAfterOptimisticUpdate?.find(
         (taskItem) => taskItem.id === initialMockTasks[0].id
       );
-      expect(toggledTask?.completed).toBe(true);
+      expect(optimisticTask?.completed).toBe(true);
     });
 
     // Resolve server response
@@ -170,13 +195,13 @@ describe('useTasks Hook Unit Tests', () => {
 
     // Verify cache has been rolled back to original uncompleted state
     const cachedTasksAfterRollback = testQueryClient.getQueryData<Task[]>(taskKeys.all);
-    const restoredTask = cachedTasksAfterRollback?.find(
+    const rolledBackTask = cachedTasksAfterRollback?.find(
       (taskItem) => taskItem.id === initialMockTasks[0].id
     );
-    expect(restoredTask?.completed).toBe(false);
+    expect(rolledBackTask?.completed).toBe(false);
   });
 
-  it('should optimistically remove task from cache on deletion', async () => {
+  it('should optimistically remove task from cache on deletion and trigger yellow warning undo toast', async () => {
     const { testQueryClient, WrapperComponent } = createTestWrapper();
     testQueryClient.setQueryData(taskKeys.all, initialMockTasks);
 
@@ -205,7 +230,56 @@ describe('useTasks Hook Unit Tests', () => {
     });
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Task deleted');
+      expect(toast.warning).toHaveBeenCalledWith(
+        'Task deleted',
+        expect.objectContaining({
+          description: 'Initial Task 1',
+          action: expect.objectContaining({
+            label: 'Undo',
+          }),
+        })
+      );
+    });
+  });
+
+  it('should restore task and trigger success toast when Undo action is clicked', async () => {
+    const { testQueryClient, WrapperComponent } = createTestWrapper();
+    testQueryClient.setQueryData(taskKeys.all, initialMockTasks);
+
+    vi.mocked(apiModule.deleteTask).mockResolvedValueOnce(undefined);
+    const restoredTask: Task = {
+      id: 'task-101-restored',
+      title: 'Initial Task 1',
+      description: 'First test description',
+      completed: false,
+      userId: 'user-1',
+      createdAt: new Date().toISOString(),
+    };
+    vi.mocked(apiModule.createTask).mockResolvedValueOnce(restoredTask);
+
+    const { result } = renderHook(() => useTasks(), { wrapper: WrapperComponent });
+
+    act(() => {
+      result.current.deleteTask('task-101');
+    });
+
+    await waitFor(() => {
+      expect(toast.warning).toHaveBeenCalledWith('Task deleted', expect.anything());
+    });
+
+    // Extract undo callback from toast call
+    const lastToastCall = vi.mocked(toast.warning).mock.calls[0];
+    const toastOptions = lastToastCall[1] as { action?: { onClick?: () => void } };
+    expect(toastOptions?.action?.onClick).toBeDefined();
+
+    // Trigger Undo
+    await act(async () => {
+      toastOptions?.action?.onClick?.();
+    });
+
+    await waitFor(() => {
+      expect(apiModule.createTask).toHaveBeenCalledWith('Initial Task 1', 'First test description');
+      expect(toast.success).toHaveBeenCalledWith('Task restored');
     });
   });
 
