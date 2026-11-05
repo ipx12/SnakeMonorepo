@@ -169,7 +169,7 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
             <Link href="/admin/users" className="w-full sm:w-auto">
               <Button
                 size="sm"
-                className="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold gap-1.5 cursor-pointer shadow-lg shadow-purple-500/25 transition-all justify-center"
+                className="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold gap-1.5 cursor-pointer shadow-lg shadow-purple-500/25 transition-[color,background-color,border-color,box-shadow,scale] justify-center"
               >
                 <Users className="size-3.5" /> User List
               </Button>
@@ -189,7 +189,7 @@ export function AuthStatusCard({ user, authLoading }: AuthStatusCardProps) {
               <Link href="/register" className="w-full sm:w-auto">
                 <Button
                   size="sm"
-                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold gap-1.5 cursor-pointer justify-center shadow-lg shadow-emerald-500/20 transition-all"
+                  className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-semibold gap-1.5 cursor-pointer justify-center shadow-lg shadow-emerald-500/20 transition-[color,background-color,border-color,box-shadow,scale]"
                 >
                   <UserPlus className="size-3.5" /> Register
                 </Button>
