@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/components/ui/sonner';
 import { createTask, updateTask, deleteTask, type Task } from '@/lib/api';
@@ -16,19 +17,21 @@ export interface UseTasksOptions {
  * and optimistic UI updates for personal tasks, including neutral undoable deletions.
  *
  * @param options - Configuration options controlling query enablement
- * @returns Object providing task data, loading/error states, and CRUD mutation handlers
+ * @returns Object providing task data, loading/fetching/error states, and CRUD mutation handlers
  *
  * @example
- * const { taskList, isTasksLoading, createTask, toggleTaskCompletion, deleteTask, restoreTask } = useTasks();
+ * const { taskList, isTasksLoading, isTasksFetching, createTask, toggleTaskCompletion, deleteTask, restoreTask, refreshTasks } = useTasks();
  */
 export function useTasks(options: UseTasksOptions = {}) {
   const { enabled = true } = options;
   const queryClient = useQueryClient();
+  const [isTasksRefreshing, setIsTasksRefreshing] = useState(false);
 
   // Fetch tasks query
   const {
     data: taskList = [],
     isLoading: isTasksLoading,
+    isFetching: isTasksFetching,
     isError,
     error,
     refetch,
@@ -168,9 +171,20 @@ export function useTasks(options: UseTasksOptions = {}) {
     },
   });
 
+  const refreshTasks = async () => {
+    setIsTasksRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+    } finally {
+      setIsTasksRefreshing(false);
+    }
+  };
+
   return {
     taskList,
     isTasksLoading,
+    isTasksFetching,
+    isTasksRefreshing,
     errorMessage,
     createTask: createMutation.mutate,
     createTaskAsync: createMutation.mutateAsync,
@@ -184,7 +198,7 @@ export function useTasks(options: UseTasksOptions = {}) {
     isDeletingTask: deleteMutation.isPending,
     restoreTask: restoreTaskMutation.mutate,
     isRestoringTask: restoreTaskMutation.isPending,
-    refreshTasks: () => queryClient.invalidateQueries({ queryKey: taskKeys.all }),
+    refreshTasks,
     refetch,
   };
 }

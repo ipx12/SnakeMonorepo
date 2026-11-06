@@ -26,6 +26,7 @@ export function DashboardContainer() {
   const {
     taskList,
     isTasksLoading,
+    isTasksRefreshing,
     errorMessage,
     createTask,
     toggleTaskCompletion,
@@ -128,6 +129,7 @@ export function DashboardContainer() {
             <TaskList
               items={taskList}
               loading={isTasksLoading}
+              isFetching={isTasksRefreshing}
               editingItem={editingTask}
               editTitle={editingTaskTitle}
               editDescription={editingTaskDescription}
