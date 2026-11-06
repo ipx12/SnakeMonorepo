@@ -83,7 +83,7 @@ Monorepo containing Next.js frontend (`apps/web`) and Hono backend (`apps/api`).
   - `react-doctor/only-export-components`: Watermelon/shadcn UI primitives intentionally co-export helpers (`buttonVariants`, `toast`).
   - `react-doctor/no-unguarded-throwing-parse-call`: `new URL(INTERNAL_API_URL)` in `api-server.ts` should fail loudly on misconfiguration.
   - Accessibility rule: every form `<label>` must use `htmlFor` bound to a control `id`; non-input groups (e.g. role picker) use `<span id>` + `role="group" aria-labelledby`. Avoid `transition-all`; use explicit property lists (e.g. `transition-[color,background-color,border-color,box-shadow,scale]`).
-  - **Pull Request Checks**: [`.github/workflows/react-doctor.yml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/react-doctor.yml) runs `millionco/react-doctor@v2` with `directory: apps/web` on every PR touching `apps/web/**` or `packages/types/**` (and on pushes to `main`). It posts a sticky summary comment, inline review comments, and a commit status with the health score for new issues introduced relative to the merge base. Currently advisory (`blocking: none`); fix any reported findings before merging.
+  - **Pull Request Checks**: [`.github/workflows/react-doctor.yml`](file:///d:/WEB/SnakeMonorepo/.github/workflows/react-doctor.yml) runs `millionco/react-doctor@v2` with `directory: apps/web` on pull requests targeting `develop` touching `apps/web/**` or `packages/types/**`. It posts a sticky summary comment, inline review comments, and a commit status with the health score for new issues introduced relative to the merge base. Currently advisory (`blocking: none`); fix any reported findings before merging.
 
 ### 6. Directory Structure Conventions
 

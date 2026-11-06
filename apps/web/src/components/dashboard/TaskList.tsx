@@ -10,9 +10,10 @@ import { TaskItem } from './TaskItem';
 
 gsap.registerPlugin(useGSAP);
 
-interface TaskListProps {
+export interface TaskListProps {
   items: Task[];
   loading: boolean;
+  isFetching?: boolean;
   editingItem: Task | null;
   editTitle: string;
   editDescription: string;
@@ -29,6 +30,7 @@ interface TaskListProps {
 export function TaskList({
   items: taskList,
   loading: isTasksLoading,
+  isFetching: isTasksFetching = false,
   editingItem: editingTask,
   editTitle: editingTaskTitle,
   editDescription: editingTaskDescription,
@@ -42,12 +44,13 @@ export function TaskList({
   onDelete: onDeleteTask,
 }: TaskListProps) {
   const taskListContainerRef = useRef<HTMLDivElement | null>(null);
+  const refreshIconRef = useRef<SVGSVGElement | null>(null);
   const isInitialMountRef = useRef(true);
   const previousLoadingStateRef = useRef(isTasksLoading);
   // Lazily populated on the first effect run to avoid rebuilding a Set on every render
   const previousTaskIdsRef = useRef<Set<string> | null>(null);
 
-  useGSAP(
+  const { contextSafe } = useGSAP(
     () => {
       if (!taskListContainerRef.current) return;
 
@@ -108,6 +111,24 @@ export function TaskList({
     { scope: taskListContainerRef, dependencies: [isTasksLoading, taskList] }
   );
 
+  const handleRefreshClick = () => {
+    contextSafe(() => {
+      if (refreshIconRef.current) {
+        gsap.fromTo(
+          refreshIconRef.current,
+          { rotation: 0 },
+          {
+            rotation: 360,
+            duration: 0.5,
+            ease: 'power2.out',
+            clearProps: 'rotation',
+          }
+        );
+      }
+      onRefreshTasks();
+    })();
+  };
+
   return (
     <div className="md:col-span-2 space-y-4">
       <div className="flex justify-between items-center mb-1">
@@ -120,11 +141,14 @@ export function TaskList({
         <Button
           variant="ghost"
           size="sm"
-          onClick={onRefreshTasks}
-          disabled={isTasksLoading}
+          onClick={handleRefreshClick}
+          disabled={isTasksLoading || isTasksFetching}
           className="text-xs font-semibold text-teal-400 hover:text-teal-300 hover:bg-secondary/40 transition-colors gap-1.5 cursor-pointer"
         >
-          <RefreshCw className={`size-3.5 ${isTasksLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw
+            ref={refreshIconRef}
+            className={`size-3.5 ${isTasksFetching || isTasksLoading ? 'animate-spin' : ''}`}
+          />
           Refresh
         </Button>
       </div>
