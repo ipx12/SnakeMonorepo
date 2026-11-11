@@ -22,8 +22,7 @@ const getCachedTaskById = cache(async (taskId: string) => {
  * Dynamically generates the page metadata using the fetched task title when available.
  */
 export async function generateMetadata({ params }: TaskDetailPageProps): Promise<Metadata> {
-  const { id: taskId } = await params;
-  const { user } = await getServerSession();
+  const [{ id: taskId }, { user }] = await Promise.all([params, getServerSession()]);
 
   if (!user || !taskId) {
     return {
@@ -57,8 +56,7 @@ export async function generateMetadata({ params }: TaskDetailPageProps): Promise
  * to avoid a redundant 404/403 client refetch.
  */
 export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
-  const { id: taskId } = await params;
-  const { user } = await getServerSession();
+  const [{ id: taskId }, { user }] = await Promise.all([params, getServerSession()]);
   const queryClient = new QueryClient();
   let initialErrorMessage: string | undefined;
 

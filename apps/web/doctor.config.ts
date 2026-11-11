@@ -1,10 +1,9 @@
-{
-  "ignore": {
-    "rules": [
+export default {
+  ignore: {
+    rules: [
       "react-doctor/query-stable-query-client",
       "react-doctor/only-export-components",
       "react-doctor/no-unguarded-throwing-parse-call"
     ]
   }
-}
-
+};
