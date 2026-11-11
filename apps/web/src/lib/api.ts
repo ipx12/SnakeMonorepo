@@ -44,6 +44,29 @@ export async function getTasks(signal?: AbortSignal): Promise<Task[]> {
 }
 
 /**
+ * Fetches a single task by its unique identifier.
+ *
+ * @param taskId - Unique identifier of the task to retrieve
+ * @param signal - Optional AbortSignal for request cancellation
+ * @returns The requested Task entity
+ * @throws {Error} If task is not found (404), belongs to another user (403), or request fails
+ *
+ * @example
+ * const task = await getTaskById('task-123');
+ */
+export async function getTaskById(taskId: string, signal?: AbortSignal): Promise<Task> {
+  const apiResponse = await fetch(`${TASKS_API_URL}/${encodeURIComponent(taskId)}`, {
+    credentials: 'include',
+    signal,
+  });
+  if (!apiResponse.ok) {
+    const errorData = await apiResponse.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch task');
+  }
+  return apiResponse.json();
+}
+
+/**
  * Creates and persists a new task for the authenticated user.
  *
  * @param title - Task title (must not be empty)

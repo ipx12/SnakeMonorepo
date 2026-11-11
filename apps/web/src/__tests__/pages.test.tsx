@@ -29,12 +29,16 @@ vi.mock('@/lib/auth-server', () => ({
 // Mock API server calls that happen during SSR prefetching
 vi.mock('@/lib/api-server', () => ({
   getTasksServer: vi.fn().mockResolvedValue([]),
+  getTaskByIdServer: vi.fn().mockResolvedValue(null),
   getAdminUsersServer: vi.fn().mockResolvedValue({ users: [], pagination: { totalCount: 0, page: 1, limit: 10, totalPages: 1 } }),
 }));
 
 // Mock client API calls
 vi.mock('@/lib/api', () => ({
   getTasks: vi.fn().mockResolvedValue([]),
+  getTaskById: vi.fn().mockResolvedValue(null),
+  updateTask: vi.fn(),
+  deleteTask: vi.fn(),
   getAdminUsers: vi.fn().mockResolvedValue({ users: [], pagination: { totalCount: 0, page: 1, limit: 10, totalPages: 1 } }),
 }));
 
@@ -42,8 +46,10 @@ import HomePage from '../app/page';
 import LoginPage from '../app/login/page';
 import RegisterPage from '../app/register/page';
 import AdminUsersPage from '../app/admin/users/page';
+import TaskDetailPage, { generateMetadata } from '../app/tasks/[id]/page';
 import { useSession } from '@/lib/auth-client';
-import { getTasks, getAdminUsers } from '@/lib/api';
+import { getTasks, getTaskById, getAdminUsers } from '@/lib/api';
+import { getTaskByIdServer } from '@/lib/api-server';
 
 function renderWithProviders(ui: React.ReactElement) {
   const testQueryClient = new QueryClient({
@@ -117,6 +123,30 @@ describe('App Router Pages Integration Tests', () => {
       const Component = await AdminUsersPage();
       renderWithProviders(Component);
       expect(await screen.findByText(/Access Restricted/i)).toBeInTheDocument();
+    });
+
+    it('TaskDetailPage should prefetch and render task details for authenticated user', async () => {
+      const mockTask = {
+        id: 'task-42',
+        title: 'Dynamic Route Task',
+        description: 'Detailed description for task 42',
+        completed: false,
+        userId: 'user-1',
+        createdAt: '2026-05-01T10:00:00.000Z',
+      };
+      vi.mocked(getTaskByIdServer).mockResolvedValue(mockTask);
+      vi.mocked(getTaskById).mockResolvedValue(mockTask);
+
+      const Component = await TaskDetailPage({ params: Promise.resolve({ id: 'task-42' }) });
+      renderWithProviders(Component);
+
+      await waitFor(() => {
+        expect(screen.getByText('Dynamic Route Task')).toBeInTheDocument();
+        expect(screen.getByText('Detailed description for task 42')).toBeInTheDocument();
+      });
+
+      const pageMeta = await generateMetadata({ params: Promise.resolve({ id: 'task-42' }) });
+      expect(pageMeta.title).toBe('Dynamic Route Task - Watermelon UI');
     });
   });
 
