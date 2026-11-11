@@ -90,6 +90,11 @@ describe('TaskList Component', () => {
 
     expect(screen.getByText('Setup Vitest Testing')).toBeInTheDocument();
     expect(screen.getByText('Review Monorepo AGENTS.md')).toBeInTheDocument();
+
+    const viewTaskLinks = screen.getAllByTitle('View Task');
+    expect(viewTaskLinks).toHaveLength(2);
+    expect(viewTaskLinks[0]).toHaveAttribute('href', '/tasks/task-1');
+    expect(viewTaskLinks[1]).toHaveAttribute('href', '/tasks/task-2');
   });
 
   it('should trigger onToggle callback when task checkbox is clicked', async () => {

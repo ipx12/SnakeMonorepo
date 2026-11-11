@@ -58,6 +58,13 @@ export async function getTasksServer(options?: ServerFetchOptions): Promise<Task
   return serverFetch<Task[]>('/tasks', options);
 }
 
+export async function getTaskByIdServer(
+  taskId: string,
+  options?: ServerFetchOptions
+): Promise<Task> {
+  return serverFetch<Task>(`/tasks/${encodeURIComponent(taskId)}`, options);
+}
+
 export async function getAdminUsersServer(
   queryParams?: AdminUsersQueryParams,
   options?: ServerFetchOptions

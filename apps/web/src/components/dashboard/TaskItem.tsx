@@ -1,13 +1,14 @@
 'use client';
 
 import { useRef } from 'react';
+import Link from 'next/link';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit2, Trash2 } from 'lucide-react';
+import { ArrowUpRight, Edit2, Trash2 } from 'lucide-react';
 import type { Task } from '@/lib/api';
 
 gsap.registerPlugin(useGSAP);
@@ -147,13 +148,18 @@ export function TaskItem({
               className="mt-1 border-border/80 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
             />
             <div className="min-w-0">
-              <h3
-                className={`font-semibold text-base leading-tight truncate ${
-                  task.completed ? 'line-through text-muted-foreground' : 'text-foreground'
-                }`}
+              <Link
+                href={`/tasks/${task.id}`}
+                className="group inline-block max-w-full focus:outline-none"
               >
-                {task.title}
-              </h3>
+                <h3
+                  className={`font-semibold text-base leading-tight truncate transition-colors group-hover:text-emerald-400 ${
+                    task.completed ? 'line-through text-muted-foreground' : 'text-foreground'
+                  }`}
+                >
+                  {task.title}
+                </h3>
+              </Link>
               {task.description && (
                 <p className="text-muted-foreground text-sm mt-1 whitespace-pre-wrap leading-relaxed">
                   {task.description}
@@ -162,6 +168,16 @@ export function TaskItem({
             </div>
           </div>
           <div className="flex gap-1 shrink-0">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-teal-400 hover:bg-secondary transition-[color,background-color,border-color,box-shadow,scale] cursor-pointer"
+            >
+              <Link href={`/tasks/${task.id}`} title="View Task" aria-label={`View task ${task.title}`}>
+                <ArrowUpRight className="size-3.5" />
+              </Link>
+            </Button>
             <Button
               variant="ghost"
               size="icon-sm"

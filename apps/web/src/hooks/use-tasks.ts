@@ -64,6 +64,8 @@ export function useTasks(options: UseTasksOptions = {}) {
     onMutate: async ({ task, completed }) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.all });
       const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.all);
+      const detailKey = taskKeys.detail(task.id);
+      const previousDetailTask = queryClient.getQueryData<Task>(detailKey);
 
       queryClient.setQueryData<Task[]>(taskKeys.all, (cachedTasks) =>
         cachedTasks?.map((existingTask) =>
@@ -71,11 +73,21 @@ export function useTasks(options: UseTasksOptions = {}) {
         )
       );
 
-      return { previousTasks };
+      if (previousDetailTask) {
+        queryClient.setQueryData<Task>(detailKey, {
+          ...previousDetailTask,
+          completed,
+        });
+      }
+
+      return { previousTasks, previousDetailTask, detailKey };
     },
     onError: (_mutationError, _mutationVariables, mutationContext) => {
       if (mutationContext?.previousTasks) {
         queryClient.setQueryData(taskKeys.all, mutationContext.previousTasks);
+      }
+      if (mutationContext?.previousDetailTask && mutationContext?.detailKey) {
+        queryClient.setQueryData(mutationContext.detailKey, mutationContext.previousDetailTask);
       }
       toast.error('Failed to update task');
     },

@@ -127,6 +127,18 @@ export const updateTaskSchema = z.object({
 export type UpdateTaskPayload = z.infer<typeof updateTaskSchema>;
 
 /**
+ * Schema validating the task edit form fields on the client.
+ */
+export const taskEditFormSchema = z.object({
+  /** Updated task title (must not be empty) */
+  title: z.string().trim().min(1, 'Title cannot be empty'),
+  /** Updated task description */
+  description: z.string(),
+});
+
+export type TaskEditFormData = z.infer<typeof taskEditFormSchema>;
+
+/**
  * Schema validating URL route parameters containing a task ID.
  */
 export const taskIdParamSchema = z.object({
